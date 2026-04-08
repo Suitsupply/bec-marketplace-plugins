@@ -1,0 +1,19 @@
+{
+  "name": "cursor-plugins",
+  "owner": {
+    "name": "Suitsupply B.V."
+  },
+  "metadata": {
+    "description": "Internal team plugins for Cursor IDE"
+  },
+  "plugins": [
+    {
+      "name": "continuous-documentation",
+      "source": "continuous-documentation",
+      "description": "Keeps repository README.md current by mining conversation transcripts for documentation-worthy changes.",
+      "version": "1.1.0",
+      "keywords": ["documentation", "readme", "transcripts", "automation"],
+      "logo": "continuous-documentation/assets/logo.svg"
+    }
+  ]
+}

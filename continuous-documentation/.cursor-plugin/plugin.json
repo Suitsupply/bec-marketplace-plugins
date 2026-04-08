@@ -1,0 +1,20 @@
+{
+  "name": "continuous-documentation",
+  "version": "2.0.0",
+  "description": "Keeps repository README.md current by mining conversation transcripts for documentation-worthy changes, capturing intent and reasoning behind decisions.",
+  "author": {
+    "name": "mvanderjagt"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/mvanderjagt/cursor-plugin-continuous-documentation",
+  "keywords": [
+    "continuous-documentation",
+    "readme",
+    "transcripts",
+    "hooks",
+    "incremental"
+  ],
+  "logo": "assets/logo.svg",
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks.json"
+}
