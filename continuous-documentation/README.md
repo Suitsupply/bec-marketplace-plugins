@@ -1,6 +1,6 @@
 # Continuous Documentation
 
-Cursor plugin that keeps the repository `readme.md` current by mining conversation transcripts for documentation-worthy changes, capturing intent and reasoning behind decisions.
+Cursor plugin that keeps the repository `README.md` current by mining conversation transcripts for documentation-worthy changes, capturing intent and reasoning behind decisions.
 
 ## How it works
 
@@ -8,7 +8,7 @@ Three pieces work together:
 
 | Piece | Role |
 |--------|------|
-| **`update-repository-readme` command** | Delegates to a subagent that runs the full workflow: git + transcripts + incremental index → update `readme.md`. Run from the command palette anytime; does not require the hook. |
+| **`update-repository-readme` command** | Delegates to a subagent that runs the full workflow: git + transcripts + incremental index → update `README.md`. Run from the command palette anytime; does not require the hook. |
 | **`continuous-documentation` skill file** | README structure, inclusion/exclusion, slop filter, and intent guidance. Read by the subagent at runtime — not loaded into the main agent's context. |
 | **`stop` hook** | Tracks conversation cadence; when thresholds pass, tells the main agent to launch a subagent. |
 
@@ -32,7 +32,7 @@ The hook script runs with [Bun](https://bun.sh/). Ensure `bun` is available on `
 | `.cursor/hooks/state/continuous-documentation.json` | Cadence state (turn count, last run time, transcript mtime) |
 | `.cursor/hooks/state/continuous-documentation-index.json` | Incremental index (last commit SHA, processed transcript mtimes) |
 
-Both are workspace-local and excluded from version control.
+Both are workspace-local state files.
 
 ## Trigger cadence
 

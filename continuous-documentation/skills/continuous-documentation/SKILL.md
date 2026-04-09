@@ -9,7 +9,7 @@ description: >-
 
 # Continuous Documentation
 
-Rules for what belongs in the repository `readme.md` and how to write it. **Git** supplies what changed; **transcripts** supply why — when you run the full sync, use the **update-repository-readme** command for the step-by-step workflow (git log/diff, transcript discovery, incremental index).
+Rules for what belongs in the repository `README.md` and how to write it. **Git** supplies what changed; **transcripts** supply why — when you run the full sync, use the **update-repository-readme** command for the step-by-step workflow (git log/diff, transcript discovery, incremental index).
 
 ## Core Principles
 
@@ -27,14 +27,14 @@ Every section, sentence, and word must earn its place. If you cannot justify why
 
 ## Command vs this skill
 
-- **`update-repository-readme` command** — Full runbook: read `readme.md`, load the incremental index, walk git + transcripts, merge updates, write the index. Use on demand; the stop hook suggests this command when cadence thresholds pass.
+- **`update-repository-readme` command** — Full runbook: read `README.md`, load the incremental index, walk git + transcripts, merge updates, write the index. Use on demand; the stop hook suggests this command when cadence thresholds pass.
 - **This skill** — Use alone when the user wants README guidance or edits without the full sync, and always as the rule set the command must follow.
 
 ---
 
 ## README Structure by Project Type
 
-A `readme.md` must exist at the repository root level and contain substantive information about the repository's purpose. Placeholder or auto-generated READMEs are not acceptable.
+A `README.md` must exist at the repository root level and contain substantive information about the repository's purpose. Placeholder or auto-generated READMEs are not acceptable.
 
 **Update policy:**
 Only update when there are meaningful feature changes (new capabilities, changed behavior, non-trivial design shifts). Do not log routine refactors or obvious details.
@@ -61,7 +61,7 @@ Focus on the application/domain layer where logic is more complex than simple CR
 Short executive summary of what the monolith does.
 
 **Position in the Landscape**
-Mermaid sequence diagram showing how the various components in the repository interact. References to other `readme.md` files in the repository.
+Mermaid sequence diagram showing how the various components in the repository interact. References to other `README.md` files in the repository.
 
 ### UI
 
