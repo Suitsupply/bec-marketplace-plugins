@@ -1,10 +1,12 @@
 /// <reference types="bun-types-no-globals/lib/index.d.ts" />
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { stdin } from "bun";
 
 const STATE_PATH = resolve(".cursor/hooks/state/continuous-documentation.json");
+const GITIGNORE_PATH = resolve(".gitignore");
+const GITIGNORE_ENTRY = ".cursor/hooks/state/";
 const DEFAULT_MIN_TURNS = 10;
 const DEFAULT_MIN_MINUTES = 240;
 const TRIAL_DEFAULT_MIN_TURNS = 6;
@@ -53,6 +55,20 @@ function parseBoolean(value: string | undefined): boolean {
     normalized === "yes" ||
     normalized === "on"
   );
+}
+
+function ensureGitignore(): void {
+  if (!existsSync(resolve(".git"))) return;
+  try {
+    const content = existsSync(GITIGNORE_PATH)
+      ? readFileSync(GITIGNORE_PATH, "utf-8")
+      : "";
+    if (content.split(/\r?\n/).some((line) => line.trim() === GITIGNORE_ENTRY)) return;
+    const separator = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
+    appendFileSync(GITIGNORE_PATH, `${separator}${GITIGNORE_ENTRY}\n`, "utf-8");
+  } catch {
+    // best-effort; don't break the hook over a gitignore update
+  }
 }
 
 function loadState(): ContinuousDocumentationState {
@@ -138,6 +154,8 @@ async function parseHookInput<T>(): Promise<T> {
 
 async function main(): Promise<number> {
   try {
+    ensureGitignore();
+
     const input = await parseHookInput<StopHookInput>();
     const state = loadState();
 
