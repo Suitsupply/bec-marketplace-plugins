@@ -1,6 +1,7 @@
 {
   "name": "continuous-documentation",
-  "version": "2.0.0",
+  "displayName": "Continuous Documentation",
+  "version": "2.1.0",
   "description": "Keeps repository README.md current by mining conversation transcripts for documentation-worthy changes, capturing intent and reasoning behind decisions.",
   "author": {
     "name": "Suitsupply B.V."
@@ -14,7 +15,14 @@
     "hooks",
     "incremental"
   ],
+  "category": "developer-tools",
+  "tags": [
+    "automation",
+    "documentation",
+    "transcripts"
+  ],
   "logo": "assets/logo.svg",
-  "commands": "./commands/",
+  "agents": "./agents/",
+  "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -3,13 +3,16 @@ name: continuous-documentation
 description: >-
   README content rules: project-type structure, inclusion/exclusion, slop filter,
   and capturing intent from conversation. Use when editing readme.md to these
-  standards, or when applying output rules while running the update-repository-readme
-  command.
+  standards, or when the readme-updater agent runs the full sync workflow.
 ---
 
 # Continuous Documentation
 
-Rules for what belongs in the repository `README.md` and how to write it. **Git** supplies what changed; **transcripts** supply why — when you run the full sync, use the **update-repository-readme** command for the step-by-step workflow (git log/diff, transcript discovery, incremental index).
+Rules for what belongs in the repository `README.md` and how to write it. This skill defines the **content rules** — the `readme-updater` agent handles the workflow (git log/diff, transcript discovery, incremental index).
+
+## When to use this skill directly
+
+Use when the user asks for README guidance or edits without a full sync. The `readme-updater` agent also reads this skill as its rule set.
 
 ## Core Principles
 
@@ -22,13 +25,6 @@ Rules for what belongs in the repository `README.md` and how to write it. **Git*
 ### 2. What NOT to include is equally important as what to include
 
 Every section, sentence, and word must earn its place. If you cannot justify why a reader needs it, delete it. See the slop filter and exclusion rules below — they carry the same weight as the inclusion rules.
-
----
-
-## Command vs this skill
-
-- **`update-repository-readme` command** — Full runbook: read `README.md`, load the incremental index, walk git + transcripts, merge updates, write the index. Use on demand; the stop hook suggests this command when cadence thresholds pass.
-- **This skill** — Use alone when the user wants README guidance or edits without the full sync, and always as the rule set the command must follow.
 
 ---
 
@@ -207,8 +203,8 @@ Never add to the README:
 
 ```json
 {
-  "version": 1,
-  "lastCommitSha": "abc123...",
+  "version": 2,
+  "lastComparedOriginSha": "abc123...",
   "transcripts": {
     "/abs/path/to/file.jsonl": {
       "mtimeMs": 1730000000000,
@@ -217,3 +213,8 @@ Never add to the README:
   }
 }
 ```
+
+- `lastComparedOriginSha` — the last origin commit that was compared against. Always a remote ref, never a local-only commit.
+- On first run (no index), skip git history — read the full local source code to understand the project. The index will record `origin/HEAD` as the baseline for next time.
+- On subsequent runs, compare `lastComparedOriginSha..origin/HEAD` for remote changes, plus `git diff HEAD` for local uncommitted/staged work.
+- After processing, only advance `lastComparedOriginSha` to `origin/HEAD` if it is a descendant of the stored value (`git merge-base --is-ancestor`). Never regress the baseline.
