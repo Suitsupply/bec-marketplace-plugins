@@ -15,6 +15,7 @@ Team marketplace repository for Cursor IDE plugins. Import this repository as a 
 | Plugin | Description |
 |--------|-------------|
 | [continuous-documentation](./continuous-documentation/) | Keeps README in sync with git + transcripts; run the **update-repository-readme** command on demand or rely on the optional stop hook; **continuous-documentation** skill holds doc rules. |
+| [email-agent-learning](./email-agent-learning/) | Mines agent transcripts every 10 turns to build a local **EMAIL-AGENT.md** knowledge file covering email infrastructure, projects, tools, workflows, and decisions. All learnings stay workspace-local and are never committed. |
 
 ## Adding a new plugin
 
