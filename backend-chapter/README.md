@@ -19,12 +19,12 @@ Both servers run via `npx` on demand, so no global install is required.
 
 | Command | Description |
 |---------|-------------|
-| [`/migrate-to-github`](./commands/migrate-to-github.md) | One-shot migration of an Azure DevOps repository to a freshly created, **empty** GitHub repository. Mirrors history, rewrites Azure Pipelines triggers to GitHub conventions, and prints the manual ADO follow-ups (disable repo, repoint pipelines). |
+| [`/migrate-ado-repo-to-github`](./commands/migrate-to-github.md) | One-shot migration of an Azure DevOps repository to a freshly created, **empty** GitHub repository. Mirrors history, rewrites Azure Pipelines triggers to GitHub conventions, and prints the manual ADO follow-ups (disable repo, repoint pipelines). |
 
 ## Prerequisites
 
 - `npx` available on `PATH` (ships with Node.js).
-- For `/migrate-to-github`: `git` and the GitHub CLI (`gh`) authenticated via `gh auth status`.
+- For `/migrate-ado-repo-to-github`: `git` and the GitHub CLI (`gh`) authenticated via `gh auth status`.
 - Authenticated access to the Suitsupply Azure DevOps organization and the configured Azure tenant for the MCP servers to return data.
 
 ## License
