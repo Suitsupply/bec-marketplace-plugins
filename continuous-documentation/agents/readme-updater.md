@@ -14,7 +14,7 @@ Launched by the stop hook when cadence thresholds pass, or manually when the use
 
 ## Scope
 
-A repository may contain multiple READMEs. Update each at the appropriate level:
+A repository may contain multiple READMEs. Update each at the appropriate level.
 
 ## Workflow
 
