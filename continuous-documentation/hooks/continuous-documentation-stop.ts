@@ -14,7 +14,7 @@ const TRIAL_DEFAULT_MIN_MINUTES = 30;
 const TRIAL_DEFAULT_DURATION_MINUTES = 24 * 60;
 
 const FOLLOWUP_MESSAGE =
-  "Use the `readme-updater` subagent to sync the repository README.md from recent changes. Run it in the background so the user can continue their conversation.";
+  "Use the Task tool to launch the `readme-updater` subagent to sync the repository README.md from recent changes. Set the Task to run in the background so the user can continue their conversation.";
 
 interface StopHookInput {
   conversation_id: string;
