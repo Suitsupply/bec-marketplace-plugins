@@ -19,7 +19,7 @@ Both servers run via `npx` on demand, so no global install is required.
 
 | Command | Description |
 |---------|-------------|
-| [`/migrate-ado-repo-to-github`](./commands/migrate-to-github.md) | One-shot migration of an Azure DevOps repository to a freshly created, **empty** GitHub repository. Mirrors history, rewrites Azure Pipelines triggers to GitHub conventions, and prints the manual ADO follow-ups (disable repo, repoint pipelines). |
+| [`/migrate-ado-repo-to-github`](./commands/migrate-ado-repo-to-github.md) | One-shot migration of an Azure DevOps repository to a freshly created, **empty** GitHub repository. Mirrors history, rewrites Azure Pipelines triggers to GitHub conventions, and prints the manual ADO follow-ups (disable repo, repoint pipelines). |
 
 ## Prerequisites
 
