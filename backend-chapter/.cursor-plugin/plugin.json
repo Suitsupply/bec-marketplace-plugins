@@ -9,6 +9,6 @@
   "repository": "https://github.com/Suitsupply/bec-marketplace-plugins",
   "keywords": [
     "backend-chapter"
-    ],
+  ],
   "commands": "./commands/"
 }
