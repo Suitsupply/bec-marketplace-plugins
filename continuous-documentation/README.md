@@ -10,7 +10,7 @@ Three pieces work together:
 |--------|------|
 | **`readme-updater` agent** | Subagent that runs the full workflow: git + transcripts + incremental index → update `README.md`. |
 | **`continuous-documentation` skill** | README structure, inclusion/exclusion, slop filter, and intent guidance. Read by the agent at runtime — not loaded into the main agent's context. |
-| **`stop` hook** | Tracks conversation cadence; when thresholds pass, tells the main agent to run the skill which delegates to the agent. |
+| **`stop` hook** | Tracks conversation cadence; when thresholds pass, tells the main agent to launch the `readme-updater` subagent. |
 
 All heavy processing (reading git history, scanning transcripts, updating the README) happens inside a **subagent**. This keeps the main conversation context window clean.
 
