@@ -2,7 +2,7 @@
 name: continuous-documentation
 description: >-
   README content rules: project-type structure, inclusion/exclusion, slop filter,
-  and capturing intent from conversation. Use when editing readme.md to these
+  and capturing intent from conversation. Use when editing README.md to these
   standards, or when the readme-updater agent runs the full sync workflow.
 ---
 
