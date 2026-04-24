@@ -416,4 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Cursor plugin hook state (auto-generated, machine-local)
 .cursor/hooks/state/

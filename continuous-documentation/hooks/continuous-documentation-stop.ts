@@ -1,37 +1,20 @@
 /// <reference types="bun-types-no-globals/lib/index.d.ts" />
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { stdin } from "bun";
 
 const STATE_PATH = resolve(".cursor/hooks/state/continuous-documentation.json");
-const INCREMENTAL_INDEX_PATH = resolve(
-  ".cursor/hooks/state/continuous-documentation-index.json"
-);
-const PLUGIN_ROOT = resolve(import.meta.dir, "..");
-const SKILL_PATH = resolve(PLUGIN_ROOT, "skills/continuous-documentation/SKILL.md");
-const DEFAULT_MIN_TURNS = 20;
+const GITIGNORE_PATH = resolve(".gitignore");
+const GITIGNORE_ENTRY = ".cursor/hooks/state/";
+const DEFAULT_MIN_TURNS = 10;
 const DEFAULT_MIN_MINUTES = 240;
 const TRIAL_DEFAULT_MIN_TURNS = 6;
 const TRIAL_DEFAULT_MIN_MINUTES = 30;
 const TRIAL_DEFAULT_DURATION_MINUTES = 24 * 60;
 
-const SUBAGENT_PROMPT = `You are updating the repository README.md using the continuous-documentation workflow.
-
-Read the full instructions (README structure, slop filter, inclusion bar, exclusions, intent guidance) from: \`${SKILL_PATH}\`
-
-Then execute:
-1. Read the existing readme.md at the workspace root.
-2. Load the incremental index from \`${INCREMENTAL_INDEX_PATH}\` if it exists.
-3. Run git log --oneline from the last indexed commit to HEAD. For commits touching documentation-relevant areas, run git diff.
-4. Scan agent-transcripts for files with mtime newer than indexed. Extract stated reasoning and correlate with git changes.
-5. Merge What (git) + Why (transcripts) into readme.md updates following every rule in the skill.
-6. Write back the incremental index with the latest commit SHA and transcript mtimes.
-
-If no meaningful documentation updates exist, respond exactly: No documentation updates needed.`;
-
 const FOLLOWUP_MESSAGE =
-  `Delegate this to a subagent to preserve context. Use the Task tool with subagent_type "generalPurpose", description "Update repository README", and the following prompt:\n\n${SUBAGENT_PROMPT}`;
+  "Use the Task tool to launch the `readme-updater` subagent to sync the repository README.md from recent changes. Set the Task to run in the background so the user can continue their conversation.";
 
 interface StopHookInput {
   conversation_id: string;
@@ -72,6 +55,20 @@ function parseBoolean(value: string | undefined): boolean {
     normalized === "yes" ||
     normalized === "on"
   );
+}
+
+function ensureGitignore(): void {
+  if (!existsSync(resolve(".git"))) return;
+  try {
+    const content = existsSync(GITIGNORE_PATH)
+      ? readFileSync(GITIGNORE_PATH, "utf-8")
+      : "";
+    if (content.split(/\r?\n/).some((line) => line.trim() === GITIGNORE_ENTRY)) return;
+    const separator = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
+    appendFileSync(GITIGNORE_PATH, `${separator}${GITIGNORE_ENTRY}\n`, "utf-8");
+  } catch {
+    // best-effort; don't break the hook over a gitignore update
+  }
 }
 
 function loadState(): ContinuousDocumentationState {
@@ -157,6 +154,8 @@ async function parseHookInput<T>(): Promise<T> {
 
 async function main(): Promise<number> {
   try {
+    ensureGitignore();
+
     const input = await parseHookInput<StopHookInput>();
     const state = loadState();
 
