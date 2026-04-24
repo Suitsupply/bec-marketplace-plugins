@@ -1,0 +1,14 @@
+{
+  "name": "backend-chapter",
+  "version": "1.0.0",
+  "description": "General-purpose plugin for the Suitsupply Backend Chapter.",
+  "author": {
+    "name": "Suitsupply B.V."
+  },
+  "license": "MIT",
+  "repository": "https://github.com/Suitsupply/bec-marketplace-plugins",
+  "keywords": [
+    "backend-chapter"
+  ],
+  "commands": "./commands/"
+}

@@ -21,6 +21,13 @@
       "description": "Mines agent transcripts to build a local EMAIL-AGENT.md knowledge file covering email infrastructure, projects, tools, workflows, and decisions. All learnings stay workspace-local.",
       "version": "1.0.0",
       "keywords": ["email", "learning", "transcripts", "knowledge", "automation"]
+    },
+    {
+      "name": "backend-chapter",
+      "source": "backend-chapter",
+      "description": "General-purpose plugin for the Suitsupply Backend Chapter.",
+      "version": "1.0.0",
+      "keywords": ["backend-chapter"]
     }
   ]
 }
