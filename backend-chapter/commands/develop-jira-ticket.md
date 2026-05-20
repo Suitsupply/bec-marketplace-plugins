@@ -19,7 +19,7 @@ Resolve `cloudId` once via `getAccessibleAtlassianResources` before any other At
 
 1. **Read the ticket** (`getJiraIssue`) -- understand requirements, acceptance criteria, and technical analysis. Note current field values to avoid overwriting human-authored content.
 
-2. **Transition to In Progress** -- via `getTransitionsForJiraIssue` + `transitionJiraIssue`. If already done, stop and post a comment noting it was already done.
+2. **Transition to In Progress** -- via `getTransitionsForJiraIssue` + `transitionJiraIssue`. If the ticket is already `In Progress`, continue to implementation without stopping. Stop only if the ticket is already in a terminal completed state (for example `Done`/closed), and post a comment noting it was already completed.
 
 3. **Implement the ticket** -- make the code changes described in the ticket. Follow existing patterns in the codebase. Commit and push your work.
 
