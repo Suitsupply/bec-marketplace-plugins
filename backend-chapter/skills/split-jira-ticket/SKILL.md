@@ -67,9 +67,41 @@ If applying the rule is genuinely ambiguous, default to **follow-up** and flag t
 
 ## Ticket content
 
-The new ticket's description must follow the conventions in the sibling `jira-ticket-content` skill once it exists. Until then, mirror the template used by [`/refine-jira-ticket`](../../commands/refine-jira-ticket.md): `Context`, `Goal`, and `Acceptance Criteria` are mandatory; `Scope`, `Affected Areas`, `Approach`, `Considerations`, `Testing Impact`, and `Dependencies` are included only when materially applicable.
+The new ticket's description must be self-contained. `Context`, `Goal`, and `Acceptance Criteria` are mandatory; the rest are included only when materially applicable:
+
+```markdown
+## Context
+[1–3 sentences: what this touches and why the work exists. For follow-ups, note that this was carved out of the original and what the original already covers.]
+
+## Goal
+[User story / outcome.]
+
+## Acceptance Criteria
+- [Tightened from the original where applicable; never broader.]
+
+## Scope
+- **In:** …
+- **Out:** [For dependencies, note what stays in the original.]
+
+## Affected Areas
+- [Modules / files with paths]
+
+## Approach
+[1–3 sentences]
+
+## Considerations
+- [Risk, constraint, trade-off]
+
+## Testing Impact
+- [New tests, tests that break, manual verification]
+
+## Dependencies
+- [For dependencies: the original ticket key. Plus any external services / migrations / tickets.]
+```
 
 For dependencies, list the original ticket key under `Dependencies` in the new ticket and note in `Scope → Out` what stays in the original. For follow-ups, note in `Context` that this was carved out of the original and what the original already covers.
+
+> Note: [`/refine-jira-ticket`](../../commands/refine-jira-ticket.md) uses a different template (a tech-refinement *brief* layered onto an existing ticket below a `## Tech Refinement` marker), not a full ticket-content spec. Do not mirror it here.
 
 ---
 
