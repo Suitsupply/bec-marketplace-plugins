@@ -21,7 +21,18 @@ Both servers run via `npx` on demand, so no global install is required.
 |---------|-------------|
 | [`/migrate-ado-repo-to-github`](./commands/migrate-ado-repo-to-github.md) | One-shot migration of an Azure DevOps repository to a freshly created, **empty** GitHub repository. Mirrors history, rewrites Azure Pipelines triggers to GitHub conventions, and prints the manual ADO follow-ups (disable repo, repoint pipelines). |
 | [`/develop-jira-ticket`](./commands/develop-jira-ticket.md) | Non-interactive development agent. Takes a Jira ticket key, transitions it to In Progress, implements the described changes, updates the Impact Analysis field, posts a single completion comment, and transitions to Review. |
-| [`/refine-jira-ticket`](./commands/refine-jira-ticket.md) | Senior-engineer technical refinement agent. Takes a Refinement subtask key, analyzes the codebase, and creates/updates `Development` (and optionally `Refactoring`) sibling subtasks under the parent. Jira-only: never edits source code. |
+
+### Skills
+
+Loaded by the agent when explicitly invoked by name (all skills below set `disable-model-invocation: true` — no ambient auto-invocation).
+
+| Skill | Description |
+|-------|-------------|
+| [`split-jira-ticket`](./skills/split-jira-ticket/SKILL.md) | Carve a piece of work out of an existing Jira ticket into a new ticket — same epic, linked as dependency (`is blocked by`) or follow-up (`relates to`) per a single AC-anchored rule, same-sprint when a dependency lands in an active sprint, labelled `story-builder-assisted`, repo URL copied when applicable. |
+| [`refine-jira-ticket`](./skills/refine-jira-ticket/SKILL.md) | Interactive tech-refinement agent. Layers a technical brief onto a business-refined Jira ticket by splicing a `## Tech Refinement` section into the description below a marker; reporter content above the marker is never touched. May ask a clarifying question in chat; does not change ticket status. |
+| [`refine-jira-ticket-cloud`](./skills/refine-jira-ticket-cloud/SKILL.md) | Non-interactive cloud counterpart to `refine-jira-ticket`. Same splice behavior, but transitions the ticket through `REFINING` and on to `SPEC REVIEW` and reports the outcome to a single Jira comment. All human communication lives on the ticket. |
+
+Both refinement skills share their analysis logic, guards, splice rules, and brief template via [`skills/refine-jira-ticket-core/REFERENCE.md`](./skills/refine-jira-ticket-core/REFERENCE.md); the two `SKILL.md` files only encode their surface-specific overrides. That folder contains no `SKILL.md`, so it is not discovered as a skill itself.
 
 ## Prerequisites
 

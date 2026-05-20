@@ -10,5 +10,6 @@
   "keywords": [
     "backend-chapter"
   ],
-  "commands": "./commands/"
+  "commands": "./commands/",
+  "skills": "./skills/"
 }
