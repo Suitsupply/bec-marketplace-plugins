@@ -23,6 +23,14 @@ Both servers run via `npx` on demand, so no global install is required.
 | [`/develop-jira-ticket`](./commands/develop-jira-ticket.md) | Non-interactive development agent. Takes a Jira ticket key, transitions it to In Progress, implements the described changes, updates the Impact Analysis field, posts a single completion comment, and transitions to Review. |
 | [`/refine-jira-ticket`](./commands/refine-jira-ticket.md) | Senior-engineer technical refinement agent. Takes a Refinement subtask key, analyzes the codebase, and creates/updates `Development` (and optionally `Refactoring`) sibling subtasks under the parent. Jira-only: never edits source code. |
 
+### Skills
+
+Auto-loaded by the agent when it decides the workflow applies.
+
+| Skill | Description |
+|-------|-------------|
+| [`split-jira-ticket`](./skills/split-jira-ticket/SKILL.md) | Carve a piece of work out of an existing Jira ticket into a new ticket — same epic, linked as dependency (`is blocked by`) or follow-up (`relates to`) per a single AC-anchored rule, same-sprint when a dependency lands in an active sprint, labelled `story-builder-assisted`, repo URL copied when applicable. |
+
 ## Prerequisites
 
 - `npx` available on `PATH` (ships with Node.js).
