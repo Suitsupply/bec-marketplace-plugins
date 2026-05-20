@@ -78,11 +78,11 @@ Resolve `cloudId` once via `getAccessibleAtlassianResources` before any other At
    - [Sibling Refactoring key if blocking; external services / migrations / tickets]
    ```
 
-9. **Transition** the Refinement subtask to `In Review` (or the project's equivalent ready-for-review state).
+8. **Transition** the Refinement subtask to `In Review` (or the project's equivalent ready-for-review state).
 
-10. **Comment** (`addCommentToJiraIssue`) on the Refinement subtask. Always comment on first-time analysis: list created subtask keys, call out assumptions, ask blocking questions. On re-runs, only comment when something needs human attention; address the human by name and describe what you updated. Questions must explain why the answer matters. One comment per run, max.
+9. **Comment** (`addCommentToJiraIssue`) on the Refinement subtask. Always comment on first-time analysis: list created subtask keys, call out assumptions, ask blocking questions. On re-runs, only comment when something needs human attention; address the human by name and describe what you updated. Questions must explain why the answer matters. One comment per run, max.
 
-11. **Chat summary:** Refinement key + title, created subtask keys (or "none — deemed unnecessary"), final Refinement status, assumptions needing input, skipped steps with reason.
+10. **Chat summary:** Refinement key + title, created subtask keys (or "none — deemed unnecessary"), final Refinement status, assumptions needing input, skipped steps with reason.
 
 ## Rules
 
