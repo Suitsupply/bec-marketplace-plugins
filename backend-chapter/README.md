@@ -20,6 +20,8 @@ Both servers run via `npx` on demand, so no global install is required.
 | Command | Description |
 |---------|-------------|
 | [`/migrate-ado-repo-to-github`](./commands/migrate-ado-repo-to-github.md) | One-shot migration of an Azure DevOps repository to a freshly created, **empty** GitHub repository. Mirrors history, rewrites Azure Pipelines triggers to GitHub conventions, and prints the manual ADO follow-ups (disable repo, repoint pipelines). |
+| [`/develop-jira-ticket`](./commands/develop-jira-ticket.md) | Non-interactive development agent. Takes a Jira ticket key, transitions it to In Progress, implements the described changes, updates the Impact Analysis field, posts a single completion comment, and transitions to Review. |
+| [`/refine-jira-ticket`](./commands/refine-jira-ticket.md) | Senior-engineer technical refinement agent. Takes a Refinement subtask key, analyzes the codebase, and creates/updates `Development` (and optionally `Refactoring`) sibling subtasks under the parent. Jira-only: never edits source code. |
 
 ## Prerequisites
 
