@@ -11,11 +11,11 @@ The default outcome is **refined**: splice a brief with two ordered blocks.
 
 1. **For the reporter** — flag anything that needs their judgement:
 
-   - Do the business requirements hold up against how the code works today?
-   - Should any be reconsidered to make the implementation simpler or more consistent?
-   - Does the plan take on conceptual debt (parallel patterns, leaky abstractions, "we'll clean up later") or break with the existing solution's shape — even when justified?
+   - **Story validity** — does the story itself stand up against the code? Clear value, testable AC, right scope (not already covered, not too big, not too small), and consistent with how the system actually works today.
+   - **Solution validity** — is the chosen approach the right one? Proportionate to the value, defensible against a plausible alternative, and not taking on conceptual debt (parallel patterns, leaky abstractions, "we'll clean up later") or breaking the existing solution's shape — even when justified.
+   - **Change scope** — does the planned work match what the codebase needs, neither over-reaching nor under-reaching? Flag the gap in either direction — bigger than the ticket asked for, or smaller than the codebase warrants.
 
-   Omit when empty.
+   Omit any bullet when empty.
 
 2. **The plan, for the implementing agent** — approach, affected files (with paths), prerequisite work. Specific enough the next agent builds the agreed thing, not a near-miss. Skip what the next agent will trivially discover; include anything where a wrong choice diverges from what was agreed. Add risks, testing notes, or technical AC only when they would change how the work is done.
 
@@ -28,7 +28,17 @@ On a re-run, address the reporter by name and note what changed; stay silent if 
 
 ## Principles
 
-- **Codebase-grounded.** Cite files for code claims. Latest human comment = intent. Conflicts become `**Assumption:**` lines, which humans resolve via comments and which drop on the next run.
+**Choosing the solution**
+
+- **Prefer the right seam over a new one.** If existing code owns the responsibility, modify it. Don't open a parallel path to avoid touching it.
+- **Prefer consolidation over preservation.** When the work touches duplication or a near-duplicate pattern, fold rather than add a third variant.
+- **Prefer fixing the root over routing around it.** If the bug or limitation is upstream of where the ticket lands, name it and choose deliberately whether to fix here or scope out — don't silently shim.
+- **Don't trade conceptual debt for narrower blast radius.** Wider blast radius can be the right answer; debt almost never is. When they conflict, surface the tradeoff, don't dodge it.
+- **Size the surgery to the problem.** Default to the smallest change that doesn't violate the rules above. Don't grow scope to feel thorough.
+
+**Writing the brief**
+
+- **Codebase-grounded.** Cite files for code claims. Latest human comment = intent. Anything the brief leans on but can't verify — a code/intent conflict or silence, a guess about a non-functional need, an ownership call — becomes an `**Assumption:**` line. Humans resolve assumptions via comments; they drop on the next run.
 - **Opinionated.** Take a position; name the alternative briefly when the choice was non-obvious.
 - **Analysis only.** No code changes, commits, or branches.
 
