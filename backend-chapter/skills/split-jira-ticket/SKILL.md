@@ -2,12 +2,12 @@
 name: split-jira-ticket
 description: >-
   Create a split-off Jira ticket from an original ticket, with correct content and metadata. 
-  Use this skill **after** the agent has already decided that a piece of work must live in its own Jira ticket.
+  Use this skill **after** the decision has been made that a piece of work must live in its own Jira ticket.
 ---
 
 # Split-off Jira Ticket
 
-Use this skill **after** the agent has already decided that a piece of work must live in its own Jira ticket. This skill does not make that decision; it executes the split correctly.
+Use this skill **after** the decision has been made that a piece of work must live in its own Jira ticket. This skill does not make that decision; it executes the split correctly.
 
 Resolve `cloudId` once via `getAccessibleAtlassianResources` before any other Atlassian call. All writes use `contentFormat: "markdown"`; fetch with `responseContentFormat: "markdown"`.
 
@@ -19,7 +19,7 @@ Resolve `cloudId` once via `getAccessibleAtlassianResources` before any other At
 
 ## Workflow
 
-1. **Fetch the original** (`getJiraIssue`) — capture: epic link, parent (if subtask), sprint, status, GitHub repository URL (`customfield_16182`), issue type, project key.
+1. **Fetch the original** (`getJiraIssue`) — capture: epic link, parent (if subtask), sprint, status, issue type, project key.
 
 2. **Classify dependency vs follow-up** using the rule below. Record the result; it drives both the link type and the sprint decision.
 
@@ -67,41 +67,11 @@ If applying the rule is genuinely ambiguous, default to **follow-up** and flag t
 
 ## Ticket content
 
-The new ticket's description must be self-contained. `Context`, `Goal`, and `Acceptance Criteria` are mandatory; the rest are included only when materially applicable:
-
-```markdown
-## Context
-[1–3 sentences: what this touches and why the work exists. For follow-ups, note that this was carved out of the original and what the original already covers.]
-
-## Goal
-[User story / outcome.]
-
-## Acceptance Criteria
-- [Tightened from the original where applicable; never broader.]
-
-## Scope
-- **In:** …
-- **Out:** [For dependencies, note what stays in the original.]
-
-## Affected Areas
-- [Modules / files with paths]
-
-## Approach
-[1–3 sentences]
-
-## Considerations
-- [Risk, constraint, trade-off]
-
-## Testing Impact
-- [New tests, tests that break, manual verification]
-
-## Dependencies
-- [For dependencies: the original ticket key. Plus any external services / migrations / tickets.]
-```
+The new ticket's description must be self-contained. `Context`, `Goal`, and `Acceptance Criteria` are mandatory. This should be agnostic of the implementation details.
 
 For dependencies, list the original ticket key under `Dependencies` in the new ticket and note in `Scope → Out` what stays in the original. For follow-ups, note in `Context` that this was carved out of the original and what the original already covers.
 
-> Note: [`/refine-jira-ticket`](../../commands/refine-jira-ticket.md) uses a different template (a tech-refinement *brief* layered onto an existing ticket below a `## Tech Refinement` marker), not a full ticket-content spec. Do not mirror it here.
+Apply **refine-jira-ticket** skill to append the implementation details.
 
 ---
 
@@ -109,5 +79,6 @@ For dependencies, list the original ticket key under `Dependencies` in the new t
 
 - Never modify the original ticket's description, AC, or fields beyond adding the link and the single comment.
 - Never duplicate work that already exists as a sibling subtask or linked issue — search first, link to the existing one if found, and note that in the chat summary instead of creating a duplicate.
-- The `story-builder-assisted` label is mandatory on every ticket created via this skill; do not omit it even when other automation also tags the ticket.
 - One comment on the original per run, max.
+- Omit the `story-builder-assisted` label when created via this skill.
+- Omit story points
