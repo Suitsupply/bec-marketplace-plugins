@@ -11,11 +11,12 @@ The default outcome is **refined**: splice a brief with two ordered blocks.
 
 1. **For the reporter** — flag anything that needs their judgement:
 
-   - **Story validity** — does the story itself stand up against the code? Clear value, testable AC, right scope (not already covered, not too big, not too small), and consistent with how the system actually works today.
-   - **Solution validity** — is the chosen approach the right one? Proportionate to the value, defensible against a plausible alternative, and not taking on conceptual debt (parallel patterns, leaky abstractions, "we'll clean up later") or breaking the existing solution's shape — even when justified.
-   - **Change scope** — does the planned work match what the codebase needs, neither over-reaching nor under-reaching? Flag the gap in either direction — bigger than the ticket asked for, or smaller than the codebase warrants.
+- **Story validity** — does the story itself stand up against the code? Clear value, testable acceptance criteria, right scope (not already covered, not too big, not too small), and consistent with how the system actually works today.
+- **Solution validity** — is this the right kind of solution? Proportionate to the value, defensible against a plausible alternative, and not taking on conceptual debt or breaking the existing solution's shape — even when justified.
+- **Solution scope** — does the planned work touch the right amount? Flag where it over-reaches (bigger than the ticket asked for) or under-reaches (smaller than the codebase warrants).
+- **Agent validity** — could the AI agent actually do the work this brief implies? Surface gaps in context, access, or capability.
 
-   Omit any bullet when empty.
+Omit any bullet when empty.
 
 2. **The plan, for the implementing agent** — approach, affected files (with paths), prerequisite work. Specific enough the next agent builds the agreed thing, not a near-miss. Skip what the next agent will trivially discover; include anything where a wrong choice diverges from what was agreed. Add risks, testing notes, or technical AC only when they would change how the work is done.
 
