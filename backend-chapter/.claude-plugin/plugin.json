@@ -1,0 +1,8 @@
+{
+  "name": "backend-chapter",
+  "description": "Backend Chapter tools: Jira ticket refinement, splitting, test analysis, and development agents.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Suitsupply Backend Chapter"
+  }
+}
