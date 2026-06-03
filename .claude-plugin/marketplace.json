@@ -1,0 +1,24 @@
+{
+  "name": "bec-plugins",
+  "owner": {
+    "name": "Suitsupply Backend Chapter"
+  },
+  "description": "Suitsupply Backend Chapter plugins for Claude Code.",
+  "plugins": [
+    {
+      "name": "backend-chapter",
+      "source": "./backend-chapter",
+      "description": "Jira ticket refinement, splitting, test analysis, and development agents."
+    },
+    {
+      "name": "email-agent-learning",
+      "source": "./email-agent-learning",
+      "description": "Builds a local EMAIL-AGENT.md knowledge file by mining agent conversation transcripts."
+    },
+    {
+      "name": "continuous-documentation",
+      "source": "./continuous-documentation",
+      "description": "Keeps the repository README.md current by mining conversation transcripts."
+    }
+  ]
+}

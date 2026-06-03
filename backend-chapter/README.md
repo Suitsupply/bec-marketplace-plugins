@@ -29,10 +29,8 @@ Loaded by the agent when explicitly invoked by name (all skills below set `disab
 | Skill | Description |
 |-------|-------------|
 | [`split-jira-ticket`](./skills/split-jira-ticket/SKILL.md) | Carve a piece of work out of an existing Jira ticket into a new ticket — same epic, linked as dependency (`is blocked by`) or follow-up (`relates to`) per a single AC-anchored rule, same-sprint when a dependency lands in an active sprint, labelled `story-builder-assisted`, repo URL copied when applicable. |
-| [`refine-jira-ticket`](./skills/refine-jira-ticket/SKILL.md) | Interactive tech-refinement agent. Layers a technical brief onto a business-refined Jira ticket by splicing a `## Tech Refinement` section into the description below a marker; reporter content above the marker is never touched. May ask a clarifying question in chat; does not change ticket status. |
-| [`refine-jira-ticket-cloud`](./skills/refine-jira-ticket-cloud/SKILL.md) | Non-interactive cloud counterpart to `refine-jira-ticket`. Same splice behavior, but transitions the ticket through `REFINING` and on to `SPEC REVIEW` and reports the outcome to a single Jira comment. All human communication lives on the ticket. |
-
-Both refinement skills share their analysis logic, guards, splice rules, and brief template via [`skills/refine-jira-ticket-core/REFERENCE.md`](./skills/refine-jira-ticket-core/REFERENCE.md); the two `SKILL.md` files only encode their surface-specific overrides. That folder contains no `SKILL.md`, so it is not discovered as a skill itself.
+| [`refine-jira-ticket`](./skills/refine-jira-ticket/SKILL.md) | Non-interactive tech-refinement agent. Layers a technical brief onto a business-refined Jira ticket by splicing a `## Tech Refinement` section into the description below a marker; reporter content above the marker is never touched. Invokes `analyze-test-suite` internally to add test recommendations to the agent plan and flag suite health issues to the reporter. |
+| [`analyze-test-suite`](./skills/analyze-test-suite/SKILL.md) | Testing analysis skill. Audits the test suite against the testing diamond (few unit, many integration, few e2e) and produces specific test recommendations plus a suite health verdict. Runs standalone against a Jira ticket or the full codebase, or is invoked inline by `refine-jira-ticket`. |
 
 ## Prerequisites
 

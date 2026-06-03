@@ -1,5 +1,5 @@
 ---
-name: refine-jira-ticket-cloud
+name: refine-jira-ticket
 description: >-
   Non-interactive tech-refinement agent for Jira tickets. Layers a technical brief onto a business-refined Jira ticket by splicing a `## Tech Refinement` section into the description below a marker; reporter content above the marker is never touched.
 ---
@@ -19,13 +19,13 @@ The default outcome is **refined**: splice a brief with two ordered blocks.
 
 - **Story validity** — does the story itself stand up against the code? Clear value, testable acceptance criteria, right scope (not already covered, not too big, not too small), and consistent with how the system actually works today.
 - **Solution validity** — is this the *right kind* of solution? Defensible against a plausible alternative, and not taking on conceptual debt or breaking the existing solution's shape — surface these even when they look justified.
-- **Solution scope** — does it touch the *right amount*? Proportionate to the value; flag where it over-reaches (bigger than the ticket asked for) or under-reaches (smaller than the codebase warrants). When the work splits cleanly into a separable piece, recommend carving it into its own ticket (as a dependency or follow-up).
+- **Solution scope** — does it touch the *right amount*? Proportionate to the value; flag where it over-reaches (bigger than the ticket asked for) or under-reaches (smaller than the codebase warrants). When the work splits cleanly into a separable piece, recommend carving that into its own ticket (as a dependency or follow-up).
 - **Agent validity** — could the AI agent actually do the work this brief implies? Surface gaps in context, access, or capability.
 
 Omit any bullet when empty.
 
 
-2. **The plan, for the implementing agent** — approach, affected files (with paths), prerequisite work. Specific enough the next agent builds the agreed thing, not a near-miss. Skip what the next agent will trivially discover; include anything where a wrong choice diverges from what was agreed. Add risks, testing notes, or technical AC only when they would change how the work is done.
+2. **The plan, for the implementing agent** — approach, affected files (with paths), testing approach, prerequisite work. Specific enough the next agent builds the agreed thing, not a near-miss. Skip what the next agent will trivially discover; include anything where a wrong choice diverges from what was agreed. Add risks or technical AC only when they would change how the work is done.
 
 Two alternative outcomes:
 
@@ -64,5 +64,6 @@ Resolve `cloudId` once via `getAccessibleAtlassianResources`. Use markdown for `
    - Description empty
 3. **Transition** Transition to `REFINING` before analysis (`getTransitionsForJiraIssue` + `transitionJiraIssue`). Skip transition when unavailable.
 4. **Analyze.** Read enough code to back up any claim.
-5. **Splice** via `editJiraIssue`. New description = `<reporter content>\n\n---\n\n## Tech Refinement\n\n<brief>`, where `<reporter content>` is everything before the `---` preceding any prior `## Tech Refinement`, or the whole description if no marker exists. The only irreversible side effect.
-6. **Transition** Transition to `SPEC REVIEW` after the splice (`getTransitionsForJiraIssue` + `transitionJiraIssue`). Skip transition when unavailable.
+5. **Test analysis.** Apply **analyze-test-suite** SKILL. Incorporate test recommendations into implementation block and the suite health flag (when not `Healthy`) into reporter block.
+6. **Splice** via `editJiraIssue`. New description = `<reporter content>\n\n---\n\n## Tech Refinement\n\n<brief>`, where `<reporter content>` is everything before the `---` preceding any prior `## Tech Refinement`, or the whole description if no marker exists. The only irreversible side effect.
+7. **Transition** Transition to `SPEC REVIEW` after the splice (`getTransitionsForJiraIssue` + `transitionJiraIssue`). Skip transition when unavailable.
