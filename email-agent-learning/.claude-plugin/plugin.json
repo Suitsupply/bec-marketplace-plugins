@@ -1,8 +1,9 @@
 {
   "name": "email-agent-learning",
   "description": "Builds a local EMAIL-AGENT.md knowledge file by mining agent conversation transcripts for email domain learnings.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Suitsupply Backend Chapter"
-  }
+  },
+  "hooks": "./hooks/hooks.claude.json"
 }

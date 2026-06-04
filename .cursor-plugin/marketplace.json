@@ -11,7 +11,7 @@
       "name": "continuous-documentation",
       "source": "continuous-documentation",
       "description": "Keeps repository README.md current by mining conversation transcripts for documentation-worthy changes.",
-      "version": "2.0.0",
+      "version": "2.1.1",
       "keywords": ["documentation", "readme", "transcripts", "automation"],
       "logo": "continuous-documentation/assets/logo.svg"
     },
@@ -19,14 +19,14 @@
       "name": "email-agent-learning",
       "source": "email-agent-learning",
       "description": "Mines agent transcripts to build a local EMAIL-AGENT.md knowledge file covering email infrastructure, projects, tools, workflows, and decisions. All learnings stay workspace-local.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": ["email", "learning", "transcripts", "knowledge", "automation"]
     },
     {
       "name": "backend-chapter",
       "source": "backend-chapter",
       "description": "General-purpose plugin for the Suitsupply Backend Chapter.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "keywords": ["backend-chapter"]
     }
   ]
