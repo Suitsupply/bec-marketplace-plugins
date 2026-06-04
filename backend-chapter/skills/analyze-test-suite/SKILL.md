@@ -2,7 +2,7 @@
 name: analyze-test-suite
 description: >-
   Testing analysis skill. Assesses whether the test suite gives deployment
-  confidence — the ability to merge and ship without manually verification. 
+  confidence — the ability to merge and ship without manual verification.
   Produces test recommendations for a ticket's changes or a codebase
   area, plus a suite health verdict with a rework story recommendation when the
   setup undermines that confidence.
