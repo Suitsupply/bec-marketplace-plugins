@@ -1,7 +1,6 @@
 ---
 name: analyze-test-suite
 description: >-
-description: >-
   Testing analysis skill. Assesses whether the test suite gives deployment
   confidence — the ability to merge and ship without manual verification.
   Produces test recommendations for a ticket's changes or a codebase

@@ -1,6 +1,6 @@
 {
   "name": "email-agent-learning",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Continuously mines agent conversation transcripts to build a local EMAIL-AGENT.md knowledge file covering email infrastructure, projects, tools, workflows, and decisions. Triggers automatically every 10 agent turns. All learnings stay workspace-local.",
   "author": {
     "name": "Suitsupply B.V."
@@ -16,5 +16,5 @@
     "incremental"
   ],
   "commands": "./commands/",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/hooks.cursor.json"
 }
