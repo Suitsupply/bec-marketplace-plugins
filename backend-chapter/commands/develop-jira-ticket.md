@@ -29,7 +29,7 @@ Resolve `cloudId` once via `getAccessibleAtlassianResources` before any other At
 
 6. **Transition to Review** -- `getTransitionsForJiraIssue` to find the first transition whose name or destination status contains "review" (case-insensitive), then `transitionJiraIssue`. Skip if none found and note in the comment.
 
-7.  **Label as ai assisted** -- after transitioning the ticket to Review, add the label `ai-coded-assisted` to it via `editJiraIssue` (merge with existing labels; do not overwrite). If the ticket is a subtask (`fields.issuetype.subtask === true`), assign this label to the parent issue instead (`getJiraIssue` -> `fields.parent.key`).
+7.  **Label as ai coded** -- after transitioning the ticket to Review, add a label to indicate the ticket has been ai coded. If you are invoked from someone's local coding environment, the label is `ai-coded-assisted`, if you are invoked from a cloud sandbox the label is `ai-coded-agentic`. Use `editJiraIssue` (merge with existing labels; do not overwrite). If the ticket is a subtask (`fields.issuetype.subtask === true`), assign this label to the parent issue instead (`getJiraIssue` -> `fields.parent.key`).
 
 ## Constraints
 
