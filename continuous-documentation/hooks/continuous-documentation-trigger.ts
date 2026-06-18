@@ -1,29 +1,14 @@
 /// <reference types="bun-types-no-globals/lib/index.d.ts" />
 
 import { execFileSync } from "node:child_process";
-import {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
-import { resolve } from "node:path";
 import { stdin } from "bun";
 
 type Host = "cursor" | "claude";
 
-const MARKER_DIR = resolve(".continuous-documentation");
-const MARKER_PATH = resolve(MARKER_DIR, "last-documented-sha");
-const GITIGNORE_PATH = resolve(".gitignore");
-const GITIGNORE_ENTRY = ".continuous-documentation/";
-const ROOT_README = resolve("README.md");
-
-interface TriggerDecision {
-  message: string | null;
-  head: string | null;
-  seedOnly: boolean;
-}
+// Pathspecs that match every README.md in the repo — root and nested. The
+// `:(glob)` magic lets `**/` match zero or more leading directories, so the
+// root README is covered too.
+const README_PATHSPECS = [":(glob)**/README.md", "README.md"];
 
 function parseHost(): Host {
   return process.argv[2] === "claude" ? "claude" : "cursor";
@@ -49,47 +34,26 @@ function headSha(): string | null {
   return sha && sha.length > 0 ? sha : null;
 }
 
-function readMarker(): string | null {
-  if (!existsSync(MARKER_PATH)) {
-    return null;
-  }
-  try {
-    const value = readFileSync(MARKER_PATH, "utf-8").trim();
-    return value.length > 0 ? value : null;
-  } catch {
-    return null;
-  }
+// The baseline is derived, not stored: the last commit that touched any README.
+// Because it comes from git history, every clone computes the same value, so the
+// baseline is shared across the team with no workspace-local file to drift.
+function lastDocumentedSha(): string | null {
+  const sha = git(["log", "-1", "--format=%H", "--", ...README_PATHSPECS]);
+  return sha && sha.length > 0 ? sha : null;
 }
 
-function writeMarker(sha: string): void {
-  if (!existsSync(MARKER_DIR)) {
-    mkdirSync(MARKER_DIR, { recursive: true });
-  }
-  writeFileSync(MARKER_PATH, `${sha}\n`, "utf-8");
-}
-
-function ensureGitignore(): void {
-  if (!existsSync(resolve(".git"))) {
-    return;
-  }
-  try {
-    const content = existsSync(GITIGNORE_PATH)
-      ? readFileSync(GITIGNORE_PATH, "utf-8")
-      : "";
-    if (content.split(/\r?\n/).some((line) => line.trim() === GITIGNORE_ENTRY)) {
-      return;
-    }
-    const separator = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
-    appendFileSync(GITIGNORE_PATH, `${separator}${GITIGNORE_ENTRY}\n`, "utf-8");
-  } catch {
-    // best-effort; never break the hook over a gitignore update
-  }
+// An uncommitted README edit means a documentation pass is already staged and
+// waiting for the user to commit it. Stay quiet so the hook does not re-prompt
+// on every turn while those edits sit in the working tree.
+function hasUncommittedReadme(): boolean {
+  const status = git(["status", "--porcelain", "--", ...README_PATHSPECS]);
+  return status !== null && status.length > 0;
 }
 
 function buildInstruction(base: string | null, head: string): string {
   const scope =
     base === null
-      ? `No README.md exists at the repository root — treat this as a first run and read the full source tree for the "what".`
+      ? `No README.md exists yet — treat this as a first run and read the full source tree for the "what".`
       : `Document the new commits in \`${base}..${head}\` — use \`git log --stat ${base}..${head}\` and \`git diff ${base}..${head}\` for the "what".`;
   return [
     "The repository has committed changes that the documentation may not reflect yet.",
@@ -99,31 +63,25 @@ function buildInstruction(base: string | null, head: string): string {
   ].join("\n");
 }
 
-// Decide whether documentation is owed, and advance the marker so the same
-// change is never reported twice. The marker is the single source of state.
-function evaluate(): TriggerDecision {
+// Documentation is owed when HEAD has moved past the last commit that touched a
+// README and no doc edits are already pending. Committing the README is what
+// advances the baseline, so there is no marker to write back.
+function evaluate(): string | null {
   if (!isGitRepo()) {
-    return { message: null, head: null, seedOnly: false };
+    return null;
   }
   const head = headSha();
   if (head === null) {
-    return { message: null, head: null, seedOnly: false };
+    return null;
   }
-  const marker = readMarker();
-  if (marker === head) {
-    return { message: null, head, seedOnly: false };
+  const base = lastDocumentedSha();
+  if (base === head) {
+    return null;
   }
-
-  const rootReadmeExists = existsSync(ROOT_README);
-
-  // Existing repo with a README but no marker yet (fresh install): adopt the
-  // current commit as the baseline silently, so history is not re-documented.
-  if (marker === null && rootReadmeExists) {
-    return { message: null, head, seedOnly: true };
+  if (hasUncommittedReadme()) {
+    return null;
   }
-
-  const base = rootReadmeExists ? marker : null;
-  return { message: buildInstruction(base, head), head, seedOnly: false };
+  return buildInstruction(base, head);
 }
 
 function emit(host: Host, message: string | null): void {
@@ -163,12 +121,7 @@ async function main(): Promise<void> {
   }
 
   try {
-    ensureGitignore();
-    const decision = evaluate();
-    if (decision.head !== null && (decision.seedOnly || decision.message !== null)) {
-      writeMarker(decision.head);
-    }
-    emit(host, decision.seedOnly ? null : decision.message);
+    emit(host, evaluate());
   } catch (error) {
     console.error("[continuous-documentation-trigger] failed", error);
     emit(host, null);

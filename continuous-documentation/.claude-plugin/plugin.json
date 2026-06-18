@@ -1,7 +1,7 @@
 {
   "name": "continuous-documentation",
   "description": "Keeps the repository README.md current by documenting each commit — pairing the diff with the reasoning from the live conversation.",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "author": {
     "name": "Suitsupply Backend Chapter"
   },
