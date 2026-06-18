@@ -1,26 +1,26 @@
 ---
-name: continuous-documentation
+name: documentation-standards
 description: >-
   README content rules: project-type structure, inclusion/exclusion, slop filter,
   and capturing intent from conversation. Use when editing README.md to these
-  standards, or when the readme-updater agent runs the full sync workflow.
+  standards, or when the continuous-documentation agent runs the full sync workflow.
 ---
 
-# Continuous Documentation
+# Documentation Standards
 
-Rules for what belongs in the repository `README.md` and how to write it. This skill defines the **content rules** — the `readme-updater` agent handles the workflow (git log/diff, transcript discovery, incremental index).
+Rules for what belongs in the repository `README.md` and how to write it. This skill defines the **content rules** — the `continuous-documentation` agent handles the workflow (reads the commit diff for the "what" and a conversational "why" summary).
 
 ## When to use this skill directly
 
-Use when the user asks for README guidance or edits without a full sync. The `readme-updater` agent also reads this skill as its rule set.
+Use when the user asks for README guidance or edits without a full sync. The `continuous-documentation` agent also reads this skill as its rule set.
 
 ## Core Principles
 
 ### 1. What and Why are equally important
 
-"What" lives in the code — The current state. Data flow, domain logic, data contracts. Use `git log` and `git diff` to find it when syncing.
+"What" lives in the code — The current state. Data flow, domain logic, data contracts. Read the committed change (`git diff <base>..HEAD`, or the full source on a first run) to find it when syncing.
 
-"Why" lives in the conversation — Design Choices: the user's stated reasoning, rejected alternatives, constraints that shaped the decision. Use transcripts to find it and describe why it was designed as such.
+"Why" lives in the conversation — Design Choices: the user's stated reasoning, rejected alternatives, constraints that shaped the decision. The calling agent distills this from the live conversation and passes it in; describe why it was designed as such.
 
 ### 2. What NOT to include is equally important as what to include
 
@@ -136,21 +136,10 @@ This list carries the same weight as the one above. Enforce it.
 
 Every sentence in the output must pass this filter. Remove or rewrite any sentence that contains:
 
-**Banned words and phrases:**
-- "comprehensive", "robust", "seamless", "cutting-edge", "state-of-the-art"
-- "leverage", "utilize" (use "use")
-- "facilitate", "streamline"
-- "This ensures", "This allows for", "This provides"
-- "It's worth noting", "It should be noted"
-- "In order to" (use "to")
-- "As part of this change"
-- "Going forward"
-- "Powerful", "flexible", "scalable" (unless backed by a specific metric)
-- "Best-in-class", "world-class", "enterprise-grade"
-- "Boilerplate"
-- "Out of the box"
-- "End-to-end"
-- "Key", "critical", "crucial" used as filler adjectives
+**Word choice:**
+- Prefer the plain word over the inflated one (e.g. "use" not "leverage", "to" not "in order to").
+- Cut filler lead-ins that carry no information ("This ensures", "It's worth noting").
+- Drop qualifiers and adjectives that aren't backed by a concrete fact or metric ("powerful", "scalable", "key").
 
 **Structural slop:**
 - Bullet points that just rephrase the heading.
@@ -169,7 +158,7 @@ Every sentence in the output must pass this filter. Remove or rewrite any senten
 
 ## Capturing Intent
 
-When transcripts reveal why a change was made, distill it to a sentence or two in the relevant README section — placed next to the description of what changed. Good intent documentation reads like:
+When the conversation reveals why a change was made, distill it to a sentence or two in the relevant README section — placed next to the description of what changed. Good intent documentation reads like:
 
 - "Uses event sourcing instead of direct DB writes because order state must be auditable across services."
 - "Retry policy caps at 3 attempts with exponential backoff — chosen after observing transient Azure Service Bus timeouts under load."
@@ -181,7 +170,7 @@ Bad intent documentation reads like:
 - "This change ensures better performance and reliability."
 - "The decision was made after careful consideration of various factors."
 
-If the transcript does not contain meaningful intent, do not invent it. Silence is better than filler.
+If the conversation does not contain meaningful intent, do not invent it. Silence is better than filler.
 
 ## Inclusion Bar
 
@@ -198,23 +187,3 @@ Never add to the README:
 - Secrets, tokens, credentials, connection strings.
 - Developer-specific local setup (use a CONTRIBUTING.md for that).
 - Temporary workarounds with an expiry date.
-
-## Incremental Index Format
-
-```json
-{
-  "version": 2,
-  "lastComparedOriginSha": "abc123...",
-  "transcripts": {
-    "/abs/path/to/file.jsonl": {
-      "mtimeMs": 1730000000000,
-      "lastProcessedAt": "2026-03-19T12:00:00.000Z"
-    }
-  }
-}
-```
-
-- `lastComparedOriginSha` — the last origin commit that was compared against. Always a remote ref, never a local-only commit.
-- On first run (no index), skip git history — read the full local source code to understand the project. The index will record `origin/HEAD` as the baseline for next time.
-- On subsequent runs, compare `lastComparedOriginSha..origin/HEAD` for remote changes, plus `git diff HEAD` for local uncommitted/staged work.
-- After processing, only advance `lastComparedOriginSha` to `origin/HEAD` if it is a descendant of the stored value (`git merge-base --is-ancestor`). Never regress the baseline.
