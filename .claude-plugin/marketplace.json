@@ -18,7 +18,7 @@
     {
       "name": "continuous-documentation",
       "source": "./continuous-documentation",
-      "description": "Keeps the repository README.md current by mining conversation transcripts."
+      "description": "Keeps the repository README.md current by documenting each commit — diff plus conversational reasoning."
     }
   ]
 }
