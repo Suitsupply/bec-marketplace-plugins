@@ -50,7 +50,7 @@ The hook script runs with [Bun](https://bun.sh/). Ensure `bun` is available on `
 
 ## State
 
-None. The baseline is derived from git history (`git log -1 --format=%H -- '**/README.md'`), so there is no marker file to store, gitignore, or keep in sync.
+None. The baseline is derived from git history (`git log -1 --format=%H -- ':(glob)**/README.md' 'README.md'`), so there is no marker file to store, gitignore, or keep in sync.
 
 > Upgrading from an earlier version? The old `.continuous-documentation/` folder and its `.gitignore` entry are no longer used and can be deleted.
 
