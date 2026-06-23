@@ -14,7 +14,7 @@ Three pieces work together:
 
 The flow when `HEAD` has moved:
 
-1. At turn end the hook compares `git rev-parse HEAD` to the last commit that touched any `README.md` (`git log -1 --format=%H -- '**/README.md'`) — the derived baseline.
+1. At turn end the hook compares `git rev-parse HEAD` to the last commit that touched any `README.md` (`git log -1 --format=%H -- ':(glob)**/README.md' 'README.md'`) — the derived baseline.
 2. If they differ (and no README edits are already pending in the working tree), the **main agent** distills a short "why" summary from the live conversation — the design decisions and constraints behind the change.
 3. It launches the `continuous-documentation` subagent in the background, passing that summary. The subagent reads `git diff <base>..HEAD` for the "what", applies the skill, and updates the appropriate `README.md`.
 4. When the user commits the updated README, that commit becomes the new baseline — so the same commits are never documented twice.
