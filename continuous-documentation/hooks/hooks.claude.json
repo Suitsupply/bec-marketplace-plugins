@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"${CLAUDE_PLUGIN_ROOT}/hooks/continuous-documentation-stop.ts\""
+            "command": "bun",
+            "args": ["run", "${CLAUDE_PLUGIN_ROOT}/hooks/continuous-documentation-trigger.ts", "claude"]
           }
         ]
       }
