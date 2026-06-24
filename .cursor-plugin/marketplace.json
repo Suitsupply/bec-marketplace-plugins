@@ -25,8 +25,8 @@
     {
       "name": "backend-chapter",
       "source": "backend-chapter",
-      "description": "General-purpose plugin for the Suitsupply Backend Chapter.",
-      "version": "1.1.0",
+      "description": "Backend Chapter plugin: .NET skill suite, Jira workflows, MCP servers (Cursor).",
+      "version": "1.2.0",
       "keywords": ["backend-chapter"]
     }
   ]

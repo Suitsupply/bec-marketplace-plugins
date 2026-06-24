@@ -1,17 +1,19 @@
 # Backend Chapter
 
-General-purpose Cursor plugin for the Suitsupply Backend Chapter. Bundles the MCP servers and commands engineers need day-to-day so a single install gives every backend engineer the same baseline.
+General-purpose plugin for the Suitsupply Backend Chapter on **Cursor** and **Claude Code**. Bundles skills, commands, and (on Cursor) MCP servers so every backend engineer gets the same baseline.
+
+Skills live in `skills/` and are shared by both hosts — one source of truth.
 
 ## What's included
 
-### MCP servers (`mcp.json`)
+### MCP servers (`mcp.json`) — Cursor only
 
 Auto-discovered by Cursor when the plugin is installed.
 
 | Server | Purpose |
 |--------|---------|
 | `ado` | Azure DevOps MCP (`@azure-devops/mcp`) scoped to the **Suitsupply** organization. Powers repo lookups, work item queries, and the repo-context behaviour referenced in user rules (e.g. resolving `Suitsupply.*` namespaces back to their source repo). |
-| `Azure MCP Server` | Microsoft's Azure MCP (`@azure/mcp`) running in `--read-only` mode against the `fbe43f29-18b2-46ca-a741-bcc4672ba19c` tenant. Used to inspect Azure resources without mutation risk. |
+| `Azure MCP Server` | Microsoft's Azure MCP (`@azure/mcp`) running in `--read-only` mode against the configured tenant. Used to inspect Azure resources without mutation risk. |
 
 Both servers run via `npx` on demand, so no global install is required.
 
@@ -24,17 +26,30 @@ Both servers run via `npx` on demand, so no global install is required.
 
 ### Skills
 
-Loaded by the agent when explicitly invoked by name (all skills below set `disable-model-invocation: true` — no ambient auto-invocation).
+Available on **Cursor and Claude Code** via the shared `skills/` folder.
+
+#### .NET development
 
 | Skill | Description |
 |-------|-------------|
-| [`split-jira-ticket`](./skills/split-jira-ticket/SKILL.md) | Carve a piece of work out of an existing Jira ticket into a new ticket — same epic, linked as dependency (`is blocked by`) or follow-up (`relates to`) per a single AC-anchored rule, same-sprint when a dependency lands in an active sprint, labelled `story-builder-assisted`, repo URL copied when applicable. |
-| [`refine-jira-ticket`](./skills/refine-jira-ticket/SKILL.md) | Non-interactive tech-refinement agent. Layers a technical brief onto a business-refined Jira ticket by splicing a `## Tech Refinement` section into the description below a marker; reporter content above the marker is never touched. Invokes `analyze-test-suite` internally to add test recommendations to the agent plan and flag suite health issues to the reporter. |
-| [`analyze-test-suite`](./skills/analyze-test-suite/SKILL.md) | Testing analysis skill. Audits the test suite against the testing diamond (few unit, many integration, few e2e) and produces specific test recommendations plus a suite health verdict. Runs standalone against a Jira ticket or the full codebase, or is invoked inline by `refine-jira-ticket`. |
+| [`dotnet-best-practices`](./skills/dotnet-best-practices/SKILL.md) | Hub — chapter C# standards, EditorConfig, skill map, async/DI/nullability/code review |
+| [`write-src-code`](./skills/write-src-code/SKILL.md) | Production code: Azure Functions, services, enrichment, mappers, Infra clients |
+| [`write-tests`](./skills/write-tests/SKILL.md) | Testing pyramid and routing to test sub-skills |
+| [`write-unit-tests`](./skills/write-unit-tests/SKILL.md) | NUnit unit test conventions |
+| [`write-component-tests`](./skills/write-component-tests/SKILL.md) | Reqnroll component test conventions |
+| [`write-integration-tests`](./skills/write-integration-tests/SKILL.md) | Live-environment integration and smoke tests |
+
+#### Jira workflows
+
+| Skill | Description |
+|-------|-------------|
+| [`split-jira-ticket`](./skills/split-jira-ticket/SKILL.md) | Carve a piece of work out of an existing Jira ticket into a new ticket — same epic, linked as dependency or follow-up. |
+| [`refine-jira-ticket`](./skills/refine-jira-ticket/SKILL.md) | Non-interactive tech-refinement agent. Layers a technical brief onto a business-refined Jira ticket. Invokes `analyze-test-suite` for test recommendations. |
+| [`analyze-test-suite`](./skills/analyze-test-suite/SKILL.md) | Testing analysis skill. Audits the test suite and produces test recommendations plus a suite health verdict. |
 
 ## Prerequisites
 
-- `npx` available on `PATH` (ships with Node.js).
+- `npx` available on `PATH` (ships with Node.js) — Cursor MCP only.
 - For `/migrate-ado-repo-to-github`: `git` and the GitHub CLI (`gh`) authenticated via `gh auth status`.
 - Authenticated access to the Suitsupply Azure DevOps organization and the configured Azure tenant for the MCP servers to return data.
 

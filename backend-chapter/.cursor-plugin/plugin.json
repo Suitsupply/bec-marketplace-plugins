@@ -1,14 +1,17 @@
 {
   "name": "backend-chapter",
-  "version": "1.1.0",
-  "description": "General-purpose plugin for the Suitsupply Backend Chapter.",
+  "version": "1.2.0",
+  "description": "Backend Chapter plugin: .NET skill suite (dotnet-best-practices, write-src-code, write-tests), Jira workflows, and development agents. Skills work on Cursor and Claude Code.",
   "author": {
     "name": "Suitsupply B.V."
   },
   "license": "MIT",
   "repository": "https://github.com/Suitsupply/bec-marketplace-plugins",
   "keywords": [
-    "backend-chapter"
+    "backend-chapter",
+    "dotnet",
+    "csharp",
+    "testing"
   ],
   "commands": "./commands/",
   "skills": "./skills/"

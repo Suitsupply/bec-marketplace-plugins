@@ -8,7 +8,7 @@
     {
       "name": "backend-chapter",
       "source": "./backend-chapter",
-      "description": "Jira ticket refinement, splitting, test analysis, and development agents."
+      "description": "Backend Chapter plugin: .NET skill suite, Jira workflows, and development agents. Skills work on Cursor and Claude Code."
     },
     {
       "name": "email-agent-learning",
