@@ -5,12 +5,12 @@ using {ServiceName}.App.Services.Receivers.Interfaces;
 
 namespace {ServiceName}.App.Services.Receivers;
 
-public class FooCreatedReceiverService(
-    ILogger<FooCreatedReceiverService> logger,
-    IBlobStorageClient storageClient,
-    IServiceBusClient serviceBusClient)
-    : ReceiverServiceBase<FooCreatedWebhookRequest>(logger, storageClient, serviceBusClient),
-      IFooCreatedReceiverService
+public class FooReceiverService(
+    ILogger<FooReceiverService> logger,
+    IEventBlobStorageClient eventBlobStorageClient,
+    IStoreServiceBusClient storeServiceBusClient)
+    : ReceiverServiceBase<FooCreatedWebhookRequest>(logger, eventBlobStorageClient, storeServiceBusClient),
+      IFooReceiverService
 {
     protected override EventType EventType => EventType.FooCreated;
 

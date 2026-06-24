@@ -1,5 +1,7 @@
 # Testing Pyramid — Decision Guide
 
+> Example **1** — When to choose unit, component, or integration tests.
+
 ## Unit test when
 
 - Testing pure mapping logic with many edge cases

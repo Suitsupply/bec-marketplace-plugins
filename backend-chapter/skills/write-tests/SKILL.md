@@ -50,7 +50,7 @@ Apply **analyze-test-suite** when assessing suite health or planning coverage fo
 - **Reqnroll 3.3.4** (`Reqnroll.NUnit`) for component and integration tests
 - **Moq** + **AutoFixture** in unit and component tests; **no Moq** in integration tests
 - **coverlet** for unit/component coverage (`CollectCoverage=true`)
-- Standard `PropertyGroup` blocks on every test `.csproj` — see **dotnet-best-practices** [reference/csproj.md](../dotnet-best-practices/reference/csproj.md) (`IsPackable` false; coverlet on unit/component)
+- Standard `PropertyGroup` blocks on every test `.csproj` — see **dotnet-best-practices** [reference/5_csproj.md](../dotnet-best-practices/reference/5_csproj.md) (`IsPackable` false; coverlet on unit/component)
 - Mirror `src/` folder structure under each test project
 
 ## Cross-skill rule
@@ -59,7 +59,9 @@ After writing production code (**write-src-code**), apply the matching test sub-
 
 ## Examples
 
-See [examples/testing-pyramid.md](examples/testing-pyramid.md).
+| # | File | Topic |
+|---|------|-------|
+| 1 | [1_testing-pyramid.md](examples/1_testing-pyramid.md) | When to use unit, component, or integration tests |
 
 ## Sub-skills
 

@@ -9,9 +9,7 @@ public sealed class EnrichmentPipelineBuilder<TIn, TOut> { /* 200 lines of fluen
 // ✓ CORRECT — direct pipeline when steps are fixed and few
 public sealed class OrderEnrichmentPipeline(FetchOrderStep fetchOrder, ResolveLocationStep resolveLocation)
 {
-    public async Task<EnrichmentEnvelope<OrderWebhookRequest>> RunAsync(
-        EnrichmentEnvelope<OrderWebhookRequest> envelope,
-        CancellationToken cancellationToken)
+    public async Task<EnrichmentEnvelope<OrderWebhookRequest>> RunAsync(EnrichmentEnvelope<OrderWebhookRequest> envelope, CancellationToken cancellationToken)
     {
         await fetchOrder.ExecuteAsync(envelope, cancellationToken);
         await resolveLocation.ExecuteAsync(envelope, cancellationToken);
@@ -37,12 +35,3 @@ public FooMaoModel? Map(FooEnrichmentEnvelope envelope)
         return null;
     return new FooMaoModel(envelope.ResolvedMaoOrderId);
 }
-
-record FooEnrichmentEnvelope(FooWebhookRequest Source) { public Order? Order { get; set; } public string ResolvedMaoOrderId { get; set; } = ""; }
-record EnrichmentEnvelope<T>(T Source) { public Order? Order { get; set; } }
-record OrderWebhookRequest;
-record Order(string Id);
-record FooWebhookRequest;
-record FooMaoModel(string OrderId);
-sealed class FetchOrderStep { public Task ExecuteAsync(EnrichmentEnvelope<OrderWebhookRequest> e, CancellationToken ct) => Task.CompletedTask; }
-sealed class ResolveLocationStep { public Task ExecuteAsync(EnrichmentEnvelope<OrderWebhookRequest> e, CancellationToken ct) => Task.CompletedTask; }

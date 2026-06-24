@@ -1,5 +1,7 @@
 # `.csproj` PropertyGroup conventions
 
+> Reference **5** — Standard `PropertyGroup` blocks for every `src/` and `test/` project.
+
 Every `src/` and `test/` project starts with the same three `PropertyGroup` blocks. Customize `Product`, `Description`, `PackageTags`, and host-specific properties per project.
 
 Replace `{ServiceName}`, `{Year}`, and descriptions with values for the repo.

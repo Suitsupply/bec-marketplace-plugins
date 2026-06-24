@@ -1,5 +1,7 @@
 # Configuration validation (fail early)
 
+> Reference **1** — FluentValidation + `ValidateOnStart()` for every settings class bound from config.
+
 **Every** settings class bound from `IConfiguration` must be validated at startup with FluentValidation and `ValidateOnStart()`. The host must refuse to start when configuration is missing or invalid — never discover bad config on the first request or message.
 
 Applies to:

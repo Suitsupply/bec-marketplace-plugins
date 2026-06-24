@@ -46,10 +46,3 @@ public class LeakyModel
 
 // ✗ WRONG — exposing ServiceCollectionExtensions internals to App
 // App must never reference Infra project.
-
-record FooResult;
-record FooSettings { public Uri BaseUrl { get; init; } = default!; }
-class IOptions<T> { public T Value => default!; }
-class HttpClient { public Task<HttpResponseMessage> GetAsync(string url, CancellationToken ct) => default!; }
-class HttpResponseMessage { public System.Net.HttpStatusCode StatusCode; public HttpContent Content => default!; public void EnsureSuccessStatusCode() { } }
-class HttpContent { public Task<T?> ReadFromJsonAsync<T>(CancellationToken cancellationToken) => default!; }

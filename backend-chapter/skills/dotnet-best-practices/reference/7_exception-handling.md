@@ -1,16 +1,20 @@
 # Exception handling — bubble up, log at Api
 
-Unexpected exceptions are **not** caught in App or Infra. They propagate to the **Api** layer (`Functions/`), where they are logged and surfaced — never swallowed.
+> Reference **7** — Unrecoverable exceptions propagate to Api; recoverable failures use a defined fallback in App/Infra.
+
+**Unrecoverable** exceptions are not caught in App or Infra — they propagate to the **Api** layer (`Functions/`), where they are logged and surfaced.
+
+**Recoverable** failures may be caught in App or Infra when there is a defined recovery path (fallback value, skip an optional step, return `null`). Catch the **specific** exception type — not `catch (Exception)` unless wrapping a third-party API into a domain exception.
 
 ---
 
 ## Layer rules
 
-| Layer | Unexpected exceptions |
-|-------|----------------------|
-| **App** | **Do not catch** — services, enrichment steps, mappers, validators throw; no `try/catch` + log in business code |
-| **Infra** | **Do not catch** — client methods throw on failure; let callers (App) handle via bubble to Api |
-| **Api** (`Functions/`) | **Catch boundary** — `LogError(ex, …)` then **rethrow** or map to HTTP / retry scheduler |
+| Layer | Unrecoverable exceptions | Recoverable failures |
+|-------|-------------------------|-------------------|
+| **App** | **Let bubble** — no `try/catch` + `LogError` + rethrow | Catch **specific** exceptions; apply fallback; `LogWarning` when useful |
+| **Infra** | **Let bubble** — client throws on hard failure | Rare — e.g. map `404` to `null`, retry policy inside client |
+| **Api** (`Functions/`) | **Catch boundary** — `LogError(ex, …)` then rethrow, HTTP `500`, or retry scheduler | N/A — recovery belongs in App/Infra |
 
 Expected business outcomes (return `null`, early `return`, `Result<T>`) stay in App — not exceptions.
 
@@ -30,7 +34,7 @@ try
 }
 catch (Exception ex)
 {
-    logger.LogError(ex, "{Function} failed.", nameof(FooCreatedReceiver));
+    logger.LogError(ex, "{Function} failed.", nameof(FooReceiver));
     return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
 }
 ```
@@ -69,10 +73,10 @@ catch (Exception ex)
 
 ---
 
-## App layer — do not catch
+## App layer — bubble vs recover
 
 ```csharp
-// ✗ wrong — catch + log in App service
+// ✗ wrong — catch + LogError + rethrow in App (Api should log unrecoverable failures)
 public async Task ProcessAsync(FooWebhookRequest message, CancellationToken cancellationToken)
 {
     try
@@ -86,22 +90,31 @@ public async Task ProcessAsync(FooWebhookRequest message, CancellationToken canc
     }
 }
 
-// ✓ correct — let exception bubble to Api Function
+// ✓ correct — unrecoverable: let exception bubble to Api Function
 public async Task ProcessAsync(FooWebhookRequest message, CancellationToken cancellationToken)
 {
     ArgumentNullException.ThrowIfNull(message);
     logger.LogInformation("Processing order updated for order {OrderId}.", message.Id);
     await enrichmentPipeline.RunAsync(envelope, cancellationToken);
-    // …
+}
+
+// ✓ correct — recoverable: optional lookup with fallback
+try
+{
+    envelope.CustomerTier = await loyaltyClient.GetTierAsync(order.CustomerId, cancellationToken);
+}
+catch (HttpRequestException ex)
+{
+    logger.LogWarning(ex, "Loyalty lookup failed for customer {CustomerId}; using default tier.", order.CustomerId);
+    envelope.CustomerTier = CustomerTier.Standard;
 }
 ```
-
-Enrichment steps: `LogWarning` + fallback for **non-critical** lookups only — unexpected failures **throw** without catch.
 
 ---
 
 ## Checklist
 
-- [ ] No `catch (Exception)` in App services, steps, mappers, or Infra clients (unless wrapping a third-party API with a domain exception — rare)
-- [ ] Api `Functions/` have the outer `try/catch` with `LogError(ex, …)`
+- [ ] No `catch (Exception)` + `LogError` + rethrow in App or Infra
+- [ ] Recoverable failures use a **specific** catch and a defined fallback — not a broad catch
+- [ ] Api `Functions/` have the outer `try/catch` with `LogError(ex, …)` for unrecoverable failures
 - [ ] Never swallow — log + rethrow, log + HTTP 500, or log + retry scheduler

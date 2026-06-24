@@ -1,5 +1,7 @@
 # Observability and logging
 
+> Reference **8** — Structured logging, entry logs, error logs, and sparse informational logs.
+
 Structured logging for traceability in Application Insights / Log Analytics. Use **`ILogger` with named template properties** — portable across all services. Single-line messages; no `$"..."` interpolation.
 
 **Principles (all services):**
@@ -20,14 +22,12 @@ Prefix strings (`Receiver -`, `Processor -`, `{EventType}`) are **ShopifyIntegra
 | **Api HTTP trigger** | After guards, **before** body read | `{Function}`; optional `{Flow}` / route feature name |
 | **Api Service Bus trigger** | First line in `Run` | `{Function}`, `{MessageId}` |
 | **App inbound handler** | After deserialize / domain model built | Business ids — `{OrderId}`, `{CustomerId}`, `{TransactionId}`, … |
-| **App flow handler** | Start of `HandleAsync` | Same business ids as the parent flow |
-| **Api query** | After route/query params resolved | The id being queried — `{OrderId}`, `{ResourceId}`, … |
 
 **HTTP triggers** usually cannot log `{OrderId}` until App deserializes the body. **Queue triggers** log `{MessageId}` at the Function; App logs business ids after parse.
 
 ```csharp
-// Api/Functions/Receivers/FooCreatedReceiver.cs — before body read
-logger.LogInformation("{Function} invoked.", nameof(FooCreatedReceiver));
+// Api/Functions/Receivers/FooReceiver.cs — before body read
+logger.LogInformation("{Function} invoked.", nameof(FooReceiver));
 
 try
 {
@@ -37,7 +37,7 @@ try
 }
 catch (Exception ex)
 {
-    logger.LogError(ex, "{Function} failed.", nameof(FooCreatedReceiver));
+    logger.LogError(ex, "{Function} failed.", nameof(FooReceiver));
     return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
 }
 ```
@@ -56,7 +56,7 @@ logger.LogInformation("{Function} message {MessageId} received.", nameof(FooProc
 
 ```csharp
 // ✗ low trace value
-logger.LogInformation("{Function} executed at {Time}", nameof(FooCreatedReceiver), DateTime.UtcNow);
+logger.LogInformation("{Function} executed at {Time}", nameof(FooReceiver), DateTime.UtcNow);
 ```
 
 ---
@@ -71,21 +71,13 @@ logger.LogInformation("{Function} executed at {Time}", nameof(FooCreatedReceiver
 | Expected business skip | `LogInformation` or `LogWarning` | Why skipped + business ids |
 | Non-critical lookup failed | `LogWarning` | Enrichment fallback — do not fail |
 
-App and Infra let exceptions bubble — do not catch-and-log in business code. See [exception-handling.md](exception-handling.md).
-
-```csharp
-catch (Exception ex)
-{
-    logger.LogError(ex, "{Function} message {MessageId} failed.", nameof(FooProcessor), message.MessageId);
-    throw; // or HTTP 500 / retry scheduler
-}
-```
+App and Infra let **unrecoverable** exceptions bubble — do not catch-and-log just to rethrow. Recoverable failures (fallback value, optional step) may be caught in App/Infra with a specific exception type. See [7_exception-handling.md](7_exception-handling.md).
 
 ---
 
 ## Informational logs — use sparingly
 
-Beyond the **entry** line, add `LogInformation` only for troubleshooting, dashboards, or expected branches operators must see. Action-specific logs (publish sent, backup sent) belong in **named private methods** when needed — see [named-private-methods.md](named-private-methods.md).
+Beyond the **entry** line, add `LogInformation` only for troubleshooting, dashboards, or expected branches operators must see. Action-specific logs (publish sent, backup sent) belong in **named private methods** when needed — see [10_named-private-methods.md](10_named-private-methods.md).
 
 ---
 
@@ -106,7 +98,7 @@ Beyond the **entry** line, add `LogInformation` only for troubleshooting, dashbo
 | Service Bus | `{Function} message {MessageId} received.` | Retry scheduler — `LogError` / `LogWarning` |
 | `_Debug` HTTP | `LogWarning` | `LogError` → HTTP 500 |
 
-Examples: [processor-function.cs](../../write-src-code/examples/processor-function.cs), [receiver-function.cs](../../write-src-code/examples/receiver-function.cs).
+Examples: [processor-function.cs](../../write-src-code/examples/2_processor-function.cs), [receiver-function.cs](../../write-src-code/examples/1_receiver-function.cs).
 
 ---
 
@@ -129,6 +121,6 @@ Teams may add `ReceiverLoggingExtensions` / `ProcessorLoggingExtensions` in `App
 - [ ] Api HTTP entry logs `{Function}` (and optional flow name) **before** body read
 - [ ] Api Service Bus entry logs `{MessageId}` before calling App
 - [ ] App handler entry logs **business ids** after deserialize (e.g. `{OrderId}`)
-- [ ] Api `Functions/` only catch unexpected exceptions — `LogError(ex, …)` with the same correlation properties as entry
+- [ ] Api `Functions/` catch unrecoverable exceptions — `LogError(ex, …)` with the same correlation properties as entry
 - [ ] No timestamp-only entry logs
 - [ ] All log calls single-line structured templates — no `$"..."` interpolation

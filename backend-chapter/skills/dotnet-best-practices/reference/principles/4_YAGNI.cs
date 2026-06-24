@@ -35,7 +35,3 @@ public record FooSettings
 }
 
 // Rule of thumb: refactor to DRY/patterns when you feel the pain twice with a stable variation point.
-
-abstract class ReceiverServiceBase<T> { }
-record OrderCreatedWebhookRequest;
-record OrderUpdatedWebhookRequest;

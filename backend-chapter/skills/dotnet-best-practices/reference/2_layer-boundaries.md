@@ -1,5 +1,7 @@
 # Layer boundaries — DTO vs domain model
 
+> Reference **2** — App uses domain models only; Api and Infra convert wire DTOs at their edges.
+
 **The App layer works exclusively with domain models** (`App.Models`). Wire/transport shapes (DTOs) stop at the **Api** and **Infra** boundaries and are converted before App sees them.
 
 Full reference for dependency separation. See also [principles/5_SeparationOfConcerns.cs](principles/5_SeparationOfConcerns.cs).
@@ -12,23 +14,50 @@ Full reference for dependency separation. See also [principles/5_SeparationOfCon
 |------|----------|---------|---------|
 | **Public API DTO** | `{ServiceName}.Api.Models` | HTTP request/response contracts (NuGet) | Api ↔ external callers |
 | **Infra wire DTO** | `Infra/Clients/{Name}/Models/` | External API JSON/XML shapes | Infra only — **never** returned through App interfaces |
-| **Domain model** | `{ServiceName}.App.Models` | Business entities, webhooks, envelopes, value objects | **App** (and passed *through* Api/Infra after conversion) |
+| **Domain model** | `{ServiceName}.App.Models` | Business entities, value objects, feature types | **App** (and passed *through* Api/Infra after conversion) |
 
 ---
 
 ## Data flow
 
+Summary (same three flows as **dotnet-best-practices** hub):
+
+```
+Inbound:  HTTP → Api (map: request DTO → domain) → App
+Response: App → Api (map: domain → response DTO) → HTTP
+Outgoing: App → Infra (map: domain → wire request DTO) → external API
+          → Infra (map: wire response DTO → domain) → App
+```
+
+| Term | Location | Used at |
+|------|----------|---------|
+| **Request / response DTO** | `Api.Models` | HTTP boundary (Api only) |
+| **Wire request / response DTO** | `Infra/Clients/{Name}/Models/` | External API boundary (Infra only) |
+| **Domain model** | `App.Models` | App — and passed through Api/Infra after conversion |
+
 ### Inbound HTTP (Api → App)
+
+```
+Inbound: HTTP → Api (map: request DTO → domain) → App
+```
+
+Detail:
 
 ```
 External caller
   → HTTP body (JSON)
-  → Api deserializes to request DTO (Api.Models or Api-local shape)
-  → Api mapper converts DTO → domain model (App.Models)
+  → Api deserializes to request DTO (Api.Models)
+  → Api mapper converts request DTO → domain model (App.Models)
   → App service / receiver / processor (domain only)
 ```
 
-### Outbound HTTP (App → Api → caller)
+### Outbound HTTP (App → Api)
+
+```
+Response: App → Api (map: domain → response DTO) → HTTP
+```
+
+Detail:
 
 ```
 App service returns domain model (App.Models)
@@ -38,21 +67,36 @@ App service returns domain model (App.Models)
 
 Example: `GetOrderFunction` calls `IGetOrderService` (returns `Order` domain), then `IGetOrderMapper` maps `Order` → `GetOrderResponse` (Api.Models).
 
-### Infra client (App → Infra → external API)
+### Outbound call (App → Infra → external API)
+
+```
+Outgoing: App → Infra (map: domain → wire request DTO) → external API
+          → Infra (map: wire response DTO → domain) → App
+```
+
+Detail:
 
 ```
 App calls IClient interface (domain types in signature)
+  → Infra maps domain → wire request DTO
   → Infra client calls external API
-  → Infra deserializes to wire DTO (Infra/Clients/.../Models/)
-  → Infra maps wire DTO → domain model (App.Models)
+  → Infra deserializes wire response DTO (Infra/Clients/.../Models/)
+  → Infra maps wire response DTO → domain model (App.Models)
   → returns domain to App
 ```
 
-**App client interfaces must never expose Infra wire DTOs** in parameters or return types.
+**App client interfaces must never expose wire DTOs** in parameters or return types.
 
-### Outbound publish (App → external system)
+### Outbound publish (App → Infra → external system)
 
-After enrichment, **App mappers** translate domain/envelope → outbound publish shape (e.g. MAO model). That is an App-layer mapping to an external contract — not an Infra wire DTO leak.
+After enrichment (integration services), App calls a client interface with **domain types only**. **Infra** maps domain → outbound wire/publish shape and sends it — same boundary rule as HTTP clients.
+
+```
+App enrichment / service (domain only)
+  → IClient.PublishAsync(domain, …)
+  → Infra maps domain → wire/publish DTO
+  → Infra publishes to external system
+```
 
 ---
 
@@ -60,9 +104,9 @@ After enrichment, **App mappers** translate domain/envelope → outbound publish
 
 | Layer | Receives | Converts | Passes to App |
 |-------|----------|----------|---------------|
-| **Api** | HTTP DTOs (`Api.Models`, request bodies) | Api `Mappers/` — DTO ↔ domain | **Domain models only** |
+| **Api** | Request/response DTOs (`Api.Models`) | Api `Mappers/` — request/response DTO ↔ domain | **Domain models only** |
 | **App** | Domain models | Business logic, enrichment | N/A — core layer |
-| **Infra** | Wire DTOs from external APIs | Infra client mapping — wire DTO → domain | **Domain models only** (via `IClient` return types) |
+| **Infra** | Domain from App; wire DTOs from external APIs | Infra client mapping — domain → wire request; wire response → domain | **Domain models only** (via `IClient` return types) |
 
 ---
 
@@ -73,20 +117,20 @@ After enrichment, **App mappers** translate domain/envelope → outbound publish
   Mappers/                    # Boundary mappers: domain ↔ Api.Models DTO
   Functions/                  # Deserialize/map inbound; call App with domain
 
-{ServiceName}.Api.Models/       # Public HTTP contracts: {Feature}/Requests/, Responses/, Models/
+{ServiceName}.Api.Models/       # Public HTTP contracts: {Feature}/Transport/Requests/, Responses/, Models/
 
 {ServiceName}.App/
   Clients/
     Interfaces/               # One I* per downstream component — domain types only
   Services/                   # Works with App.Models only
-  Mappers/                    # Domain/envelope → outbound publish shapes (no business logic)
+  Enrichment/                 # Integration only — business logic before publish
 
-{ServiceName}.App.Models/       # Domain models — App's language
+{ServiceName}.App.Models/       # Domain models: {Feature}/Models/
 
 {ServiceName}.Infra/
   Clients/{Name}/             # One folder per downstream — see downstream-clients.md
     Models/                   # Wire DTOs — internal to Infra
-    {Name}Client.cs           # Maps wire DTO → domain before return
+    {Name}Client.cs           # Maps domain → wire request; wire response → domain
     Mappers/                  # Optional: dedicated wire-DTO → domain mappers
 ```
 
@@ -95,8 +139,8 @@ After enrichment, **App mappers** translate domain/envelope → outbound publish
 ## Api boundary example
 
 ```csharp
-// Api/Functions/Receivers/FooCreatedReceiver.cs
-public sealed class FooCreatedReceiver(IFooCreatedReceiverService service, IFooWebhookMapper webhookMapper)
+// Api/Functions/Receivers/FooReceiver.cs
+public sealed class FooReceiver(IFooReceiverService service, IFooWebhookMapper webhookMapper)
 {
     public async Task<IActionResult> Run(HttpRequest request, CancellationToken cancellationToken)
     {
@@ -109,7 +153,7 @@ public sealed class FooCreatedReceiver(IFooCreatedReceiverService service, IFooW
     }
 }
 
-// App/Services/Receivers/FooCreatedReceiverService.cs — domain only
+// App/Services/Receivers/FooReceiverService.cs — domain only
 public Task ProcessAsync(FooCreatedWebhook domain, CancellationToken cancellationToken) { … }
 ```
 
@@ -164,7 +208,6 @@ internal sealed record FooOrderWireDto { … }
 | Mapper location | Converts | Contains business logic? |
 |-----------------|----------|--------------------------|
 | `Api/Mappers/` | Domain ↔ `Api.Models` request/response DTO | No — boundary translation only |
-| `Infra/.../Mappers/` or client inline | Wire DTO → domain | No — boundary translation only |
-| `App/Mappers/` | Enriched domain/envelope → outbound publish shape | No — see [enrichment-and-mappers.md](../../write-src-code/reference/enrichment-and-mappers.md) |
+| `Infra/Clients/{Name}/Mappers/` or client inline | Domain ↔ wire request/response/publish DTO | No — boundary translation only |
 
-Business logic runs in **App services, enrichment steps, validators** — before App outbound mappers and after domain is assembled from Api/Infra boundaries.
+Business logic runs in **App services, enrichment steps, validators** — before Infra maps domain to wire shapes and after domain is assembled from Api/Infra boundaries.

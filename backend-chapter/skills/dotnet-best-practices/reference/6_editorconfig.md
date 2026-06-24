@@ -1,5 +1,7 @@
 # EditorConfig — Annotated Reference
 
+> Reference **6** — Chapter `.editorconfig` rules, formatting, and apply-before-commit workflow.
+
 Canonical file: [editorconfig](editorconfig). Copy to your repo root as `.editorconfig`.
 
 ## Apply before commit
@@ -27,6 +29,8 @@ dotnet format --verify-no-changes
 ```
 
 `EnforceCodeStyleInBuild` catches many style violations at build time, but **whitespace, import order, and fixable refactorings** still require `dotnet format` and/or Code Cleanup. Commit only the formatted result.
+
+**Boy scout rule:** fix formatting in files you touch — but open a **separate PR** for repo-wide cleanup or boy-scout changes. Do not mix them with a feature or bugfix PR.
 
 **Cursor / VS Code / Rider:** use `dotnet format` (and the IDE’s format-on-save if enabled). Code Cleanup is a Visual Studio feature — not a substitute for `dotnet format` in other editors.
 
@@ -93,7 +97,7 @@ dotnet format --verify-no-changes
 
 ## Project settings (csproj, not EditorConfig)
 
-Pair `.editorconfig` with the standard `PropertyGroup` blocks on **every** `src/` and `test/` project. See [csproj.md](csproj.md) for full templates.
+Pair `.editorconfig` with the standard `PropertyGroup` blocks on **every** `src/` and `test/` project. See [5_csproj.md](5_csproj.md) for full templates.
 
 Minimum build settings (group 1 — also include deterministic/CI and metadata groups):
 

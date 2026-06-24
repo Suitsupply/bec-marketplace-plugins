@@ -8,11 +8,21 @@ description: >-
 
 # Write Integration Tests
 
+Integration tests execute against a **live, deployed** host — no mocking. See **write-tests** for the testing pyramid and CI stages.
+
+## Examples
+
+| # | File | Topic |
+|---|------|-------|
+| 1 | [1_smoke-feature.feature](examples/1_smoke-feature.feature) | `@smoke` feature template |
+| 2 | [2_runsettings-snippet.xml](examples/2_runsettings-snippet.xml) | Per-environment runsettings |
+| 3 | [3_blob-poller-usage.cs](examples/3_blob-poller-usage.cs) | Blob backup polling |
+
+---
+
 ## Purpose
 
-Integration tests execute against a **live, deployed Azure Function App** — no mocking. They verify end-to-end behaviour from webhook receipt through blob storage side effects. They run in CI after deployment and can be run locally with a `integrationtests.local.json` secrets file.
-
-See **write-tests** skill for CI/CD stages and the testing pyramid.
+Integration tests verify end-to-end behaviour against a live deployed Azure Function App — from webhook receipt through blob storage side effects. They run in CI after deployment and can be run locally with an `integrationtests.local.json` secrets file.
 
 ## Project location
 
@@ -400,10 +410,3 @@ public async Task ThenRefundBlobMatchesFixture() { ... }
 - [ ] Scenario outline titles and descriptions use `-`, not en-dashes
 - [ ] Secrets (`FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING`) never hardcoded - env vars or `integrationtests.local.json` only
 - [ ] Step definitions class is `public sealed` with `[Binding]` and primary constructor
-
-
-## Examples
-
-- [examples/smoke-feature.feature](examples/smoke-feature.feature)
-- [examples/runsettings-snippet.xml](examples/runsettings-snippet.xml)
-- [examples/blob-poller-usage.cs](examples/blob-poller-usage.cs)

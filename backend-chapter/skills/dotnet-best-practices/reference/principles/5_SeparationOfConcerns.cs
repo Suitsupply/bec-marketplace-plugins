@@ -1,6 +1,6 @@
 // Separation of Concerns — each layer owns one aspect; DTO↔domain conversion at Api and Infra edges.
 // Chapter layout: Api → Infra → App → App.Models (inward dependencies only).
-// See: layer-boundaries.md
+// See: 2_layer-boundaries.md
 
 /*
  * Layer responsibilities:
@@ -35,11 +35,4 @@ public interface IFooClient { Task<FooOrderWireDto?> GetAsync(string id, Cancell
 // ✓ CORRECT — IClient returns App.Models domain; Infra maps internally
 public interface IFooClient { Task<FooOrder?> GetAsync(string id, CancellationToken ct); }
 
-// App orchestrates domain; enrichment applies business rules; outbound mappers translate publish shapes only.
-
-record FooCreatedRequestDto(string Id);
-record FooCreatedWebhook(string Id);
-record FooOrder;
-record FooOrderWireDto;
-interface IFooService { Task ProcessAsync(FooCreatedWebhook domain, CancellationToken ct); }
-interface IFooWebhookMapper { FooCreatedWebhook ToDomain(FooCreatedRequestDto dto); }
+// App orchestrates domain; enrichment applies business rules; Infra maps domain → wire at publish/call boundaries.

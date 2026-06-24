@@ -6,4 +6,4 @@ services.AddSingleton(FooClient.Object);
 factory.FooClient.Reset();
 
 // In ConfigureWebHost — map new HTTP function route:
-endpoints.MapPost("/api/foo/created", Route<FooCreatedReceiver>((fn, req, ct) => fn.Run(req, ct)));
+endpoints.MapPost("/api/foo/created", Route<FooReceiver>((fn, req, ct) => fn.Run(req, ct)));

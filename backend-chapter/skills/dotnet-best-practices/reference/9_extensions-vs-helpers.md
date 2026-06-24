@@ -1,6 +1,33 @@
 # Extensions — not Helper classes
 
+> Reference **9** — Use `{Type}Extensions` for model logic; never `*Helper` classes in `src/`.
+
 Do **not** create `*Helper` classes in production code (`src/`). Prefer **extension methods** for small, pure logic that operates on a model or type.
+
+---
+
+## Avoid
+
+| Do not | Why |
+|--------|-----|
+| `*Helper` static classes (`OrderHelper`, `AddressHelper`, …) | Grab-bag of unrelated methods — poor discoverability, violates SRP |
+| `Helper.Method(type)` call style | Hides the receiver; logic does not read as behaviour on the model |
+| New `*Helper` in `src/` for model validation, sums, or field extraction | Use `{Type}Extensions` with a `this` receiver instead |
+
+```csharp
+// ✗ wrong — grab-bag Helper with unrelated static methods
+public static class OrderHelper
+{
+    public static string? GetAlternateId(Order order) => …;
+    public static decimal SumLines(IReadOnlyList<OrderLine> lines) => …;
+    public static bool IsValidAddress(Address address) => …;
+}
+
+// usage — noisy, no discoverability on the type
+var id = OrderHelper.GetAlternateId(order);
+```
+
+**Prefer extensions** — discoverable via IntelliSense on the instance (`order.…`), one file per concept (`OrderExtensions`), clear receiver type for tests and review.
 
 ---
 
@@ -13,7 +40,6 @@ Do **not** create `*Helper` classes in production code (`src/`). Prefer **extens
 | Aggregations on a collection | `lines.SumPresentmentAmount()` |
 | String / ID parsing | `gid.GetShopifyNumericId()` |
 | Money / address shaping | `money.ToMaoDecimal()`, `address.FormatSingleLine()` |
-| Logging templates (optional) | `ILogger` prefix patterns, or `{Type}LoggingExtensions` in `Extensions/Logging/` when many call sites |
 | DI registration | `services.AddInfrastructure(config)` in `Infra/Extensions/` |
 
 **Rule:** if the logic is naturally phrased as “do something **with** or **to** this `Order` / `Money` / `Stream`”, make it an extension on that type.
@@ -26,7 +52,7 @@ Do **not** create `*Helper` classes in production code (`src/`). Prefer **extens
 |------|--------|
 | Class name | `{Type}Extensions` — e.g. `ShopifyOrderExtensions`, `MoneyExtensions` |
 | Method name | Verb phrase describing behaviour — `ResolveCustomerId`, `SumLineTotals` |
-| Location | `App/Extensions/` for domain models; co-locate in `App.Models/` when the extended type lives there; `Infra/Extensions/` for DI; `Extensions/Logging/` for log templates |
+| Location | `App/Extensions/` for domain models; co-locate in `App.Models/` when the extended type lives there; `Infra/Extensions/` for DI |
 | Shape | `public static class FooExtensions` with `public static TResult MethodName(this Foo foo, …)` |
 | Purity | Prefer pure functions — no hidden I/O; inject services in enrichment steps or services instead |
 
@@ -51,29 +77,6 @@ public static class OrderExtensions
 var orderId = order.ResolveAlternateOrderId();
 var total = envelope.Source.Lines.SumLineTotals();
 ```
-
----
-
-## Do not create Helper classes
-
-```csharp
-// ✗ wrong — grab-bag Helper with unrelated static methods
-public static class OrderHelper
-{
-    public static string? GetAlternateId(Order order) => …;
-    public static decimal SumLines(IReadOnlyList<OrderLine> lines) => …;
-    public static bool IsValidAddress(Address address) => …;
-}
-
-// usage — noisy, no discoverability on the type
-var id = OrderHelper.GetAlternateId(order);
-```
-
-**Why extensions win:**
-- Discoverable via IntelliSense on the instance (`order.…`)
-- One file per extended concept (`OrderExtensions`, not `OrderHelper`)
-- Clear receiver type — easier to test and review
-- Avoids “junk drawer” static classes that violate SRP
 
 ---
 

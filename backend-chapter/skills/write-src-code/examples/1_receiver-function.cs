@@ -10,10 +10,10 @@ using {ServiceName}.App.Services.Receivers.Interfaces;
 
 namespace {ServiceName}.Api.Functions.Receivers;
 
-public class FooCreatedReceiver(ILogger<FooCreatedReceiver> logger, IFooCreatedReceiverService fooCreatedReceiverService)
+public class FooReceiver(ILogger<FooReceiver> logger, IFooReceiverService fooReceiverService)
 {
-    [Function(nameof(FooCreatedReceiver))]
-    [OpenApiOperation(nameof(FooCreatedReceiver), "Foo Receivers")]
+    [Function(nameof(FooReceiver))]
+    [OpenApiOperation(nameof(FooReceiver), "Foo Receivers")]
     [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
     [OpenApiRequestBody("application/json", typeof(string), Required = true)]
     [OpenApiResponseWithoutBody(System.Net.HttpStatusCode.Accepted)]
@@ -23,17 +23,17 @@ public class FooCreatedReceiver(ILogger<FooCreatedReceiver> logger, IFooCreatedR
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        logger.LogInformation("{Function} invoked.", nameof(FooCreatedReceiver));
+        logger.LogInformation("{Function} invoked.", nameof(FooReceiver));
 
         try
         {
             var rawJson = await request.Body.ReadStreamAsString();
-            await fooCreatedReceiverService.ProcessAsync(rawJson, cancellationToken);
+            await fooReceiverService.ProcessAsync(rawJson, cancellationToken);
             return new AcceptedResult();
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{Function} failed.", nameof(FooCreatedReceiver));
+            logger.LogError(ex, "{Function} failed.", nameof(FooReceiver));
             return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
         }
     }

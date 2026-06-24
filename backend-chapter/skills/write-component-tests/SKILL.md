@@ -8,11 +8,21 @@ description: >-
 
 # Write Component Tests
 
+Component tests verify an Azure Function end-to-end in-process, with all infrastructure dependencies replaced by `Mock<>` objects. See **write-tests** for the testing pyramid.
+
+## Examples
+
+| # | File | Topic |
+|---|------|-------|
+| 1 | [1_feature-file.feature](examples/1_feature-file.feature) | Gherkin feature file template |
+| 2 | [2_step-definitions.cs](examples/2_step-definitions.cs) | Step definitions binding |
+| 3 | [3_application-factory-snippet.cs](examples/3_application-factory-snippet.cs) | `ApplicationFactory` setup |
+
+---
+
 ## Purpose
 
-Component tests verify an Azure Function end-to-end in-process, with all infrastructure dependencies (blob storage, Service Bus, sample GraphQL API, outbound publishers, etc.) replaced by `Mock<>` objects. They run with `WebApplicationFactory<Program>` and use Reqnroll (Gherkin) as the test specification language.
-
-See **write-tests** skill for the function inventory and testing pyramid.
+Component tests run with `WebApplicationFactory<Program>` and use Reqnroll (Gherkin) as the test specification language. All infrastructure dependencies (blob storage, Service Bus, sample GraphQL API, outbound publishers, etc.) are replaced by `Mock<>` objects.
 
 ## Project location
 
@@ -438,9 +448,3 @@ Also implement the receiver service, add `EventType`, register in `Program.cs`, 
 - [ ] File-driven scenarios place fixtures under `Scenarios/{Domain}/{ScenarioName}/`
 - [ ] Non-deterministic fields are added to `IgnoredJsonProperties` in the file-driven step definitions
 - [ ] New Azure Function HTTP routes are registered in `ApplicationFactory.ConfigureWebHost`
-
-
-## Examples
-
-- [examples/feature-file.feature](examples/feature-file.feature)
-- [examples/application-factory-snippet.cs](examples/application-factory-snippet.cs)

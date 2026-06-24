@@ -12,30 +12,67 @@ description: >-
 
 Hub skill for Backend Chapter C# development. Works on Cursor and Claude Code.
 
+**Guidelines** apply to all backends (microservices, Web Apps, tools). **Integration examples** (webhooks, queues, enrichment) are optional — see [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md).
+
 For production code patterns apply **write-src-code**. For tests apply **write-tests** (routes to unit/component/integration sub-skills).
 
 ## Skill map
 
-| Task | Skill |
-|------|-------|
-| General C# / standards / EditorConfig | `dotnet-best-practices` (this skill) |
-| SRP, DRY, SOLID, patterns | `dotnet-best-practices` — [reference/principles-and-patterns.md](reference/principles-and-patterns.md) |
-| Add function, service, client, mapper | `write-src-code` |
-| Layer boundaries (DTO vs domain) | `dotnet-best-practices` — [reference/layer-boundaries.md](reference/layer-boundaries.md) |
-| `src/` folder layout per project | `dotnet-best-practices` — [reference/src-folder-structure.md](reference/src-folder-structure.md) |
-| Logging / observability | `dotnet-best-practices` — [reference/observability-logging.md](reference/observability-logging.md) |
-| Exception handling | `dotnet-best-practices` — [reference/exception-handling.md](reference/exception-handling.md) |
-| Extensions vs Helpers | `dotnet-best-practices` — [reference/extensions-vs-helpers.md](reference/extensions-vs-helpers.md) |
-| Interface placement | `dotnet-best-practices` — [reference/interfaces.md](reference/interfaces.md) |
-| Downstream clients | `dotnet-best-practices` — [reference/downstream-clients.md](reference/downstream-clients.md) |
-| Named private methods | `dotnet-best-practices` — [reference/named-private-methods.md](reference/named-private-methods.md) |
-| "Write tests" (unspecified) | `write-tests` |
-| Unit tests | `write-unit-tests` |
-| Component / Reqnroll tests | `write-component-tests` |
-| Integration / smoke tests | `write-integration-tests` |
-| Test suite health / planning | `analyze-test-suite` |
+| # | Task | Skill / document |
+|---|------|------------------|
+| — | General C# / chapter standards (hub) | `dotnet-best-practices` (this skill) |
+| 1 | `src/` and `test/` folder layout | [1_src-folder-structure.md](reference/1_src-folder-structure.md) |
+| 2 | Layer boundaries (DTO vs domain) | [2_layer-boundaries.md](reference/2_layer-boundaries.md) |
+| 3 | Interface placement | [3_interfaces.md](reference/3_interfaces.md) |
+| 4 | Downstream clients | [4_downstream-clients.md](reference/4_downstream-clients.md) |
+| 5 | `.csproj` PropertyGroups | [5_csproj.md](reference/5_csproj.md) |
+| 6 | EditorConfig / formatting | [6_editorconfig.md](reference/6_editorconfig.md) |
+| 7 | Exception handling | [7_exception-handling.md](reference/7_exception-handling.md) |
+| 8 | Logging / observability | [8_observability-logging.md](reference/8_observability-logging.md) |
+| 9 | Extensions vs Helpers | [9_extensions-vs-helpers.md](reference/9_extensions-vs-helpers.md) |
+| 10 | Named private methods | [10_named-private-methods.md](reference/10_named-private-methods.md) |
+| 11 | SRP, DRY, SOLID, patterns | [11_principles-and-patterns.md](reference/11_principles-and-patterns.md) |
+| — | ServiceInfo / shared Api packages | [Chapter common packages](#chapter-common-packages) |
+| — | Add function, service, client, mapper | `write-src-code` |
+| — | Integration service patterns (optional) | [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md) |
+| — | Write tests (unspecified tier) | `write-tests` |
+| — | Unit tests | `write-unit-tests` |
+| — | Component / Reqnroll tests | `write-component-tests` |
+| — | Integration / smoke tests | `write-integration-tests` |
+| — | Test suite health / planning | `analyze-test-suite` |
 
 Repo-specific `.cursor/skills/` in a project extend these chapter skills. On conflict, repo skills win.
+
+## References
+
+| # | Document | Topic |
+|---|----------|-------|
+| 1 | [1_src-folder-structure.md](reference/1_src-folder-structure.md) | `src/` and `test/` layout — horizontal vs vertical |
+| 2 | [2_layer-boundaries.md](reference/2_layer-boundaries.md) | DTO vs domain at Api and Infra edges |
+| 3 | [3_interfaces.md](reference/3_interfaces.md) | `Interfaces/` folder placement |
+| 4 | [4_downstream-clients.md](reference/4_downstream-clients.md) | One client per downstream component |
+| 5 | [5_csproj.md](reference/5_csproj.md) | `.csproj` PropertyGroup templates |
+| 6 | [6_editorconfig.md](reference/6_editorconfig.md) | EditorConfig rules and formatting |
+| 7 | [7_exception-handling.md](reference/7_exception-handling.md) | Bubble up; log at Api |
+| 8 | [8_observability-logging.md](reference/8_observability-logging.md) | Structured logging |
+| 9 | [9_extensions-vs-helpers.md](reference/9_extensions-vs-helpers.md) | Extensions over `*Helper` classes |
+| 10 | [10_named-private-methods.md](reference/10_named-private-methods.md) | Named private extraction |
+| 11 | [11_principles-and-patterns.md](reference/11_principles-and-patterns.md) | SOLID, DRY, patterns index |
+
+## Examples
+
+| # | File | Topic |
+|---|------|-------|
+| 1 | [1_good-vs-bad.md](examples/1_good-vs-bad.md) | Good vs bad patterns — index |
+| 2 | [2_async.md](examples/2_async.md) | Async/await and parallel tasks |
+| 3 | [3_nullability.md](examples/3_nullability.md) | Null guards and nullable reference types |
+| 4 | [4_di-config-and-coverage.md](examples/4_di-config-and-coverage.md) | DI, config validation, coverage exclusions |
+| 5 | [5_logging-and-exceptions.md](examples/5_logging-and-exceptions.md) | Structured logging and bubble-up exceptions |
+| 6 | [6_code-structure.md](examples/6_code-structure.md) | Named methods, blank lines, comments, SRP |
+| 7 | [7_architecture-patterns.md](examples/7_architecture-patterns.md) | Clients, interfaces, layers, mappers, DRY |
+| 8 | [8_style-and-performance.md](examples/8_style-and-performance.md) | Immutability, LINQ, naming, performance |
+
+Production templates: **write-src-code** — [examples/](../write-src-code/examples/). Test templates: **write-tests** sub-skills.
 
 ---
 
@@ -48,7 +85,7 @@ Standard backend service layout:
 ├── src/
 │   ├── {ServiceName}.Api/           # Host (Azure Functions or ASP.NET Web App)
 │   ├── {ServiceName}.Api.Models/    # Published NuGet API contracts
-│   ├── {ServiceName}.App/           # Use cases, services, mappers, client interfaces
+│   ├── {ServiceName}.App/           # Use cases, services, enrichment, client interfaces
 │   ├── {ServiceName}.App.Models/    # Internal DTOs and domain models
 │   └── {ServiceName}.Infra/         # Client implementations, DI wiring
 ├── test/
@@ -68,7 +105,7 @@ Standard backend service layout:
 └── {ServiceName}.slnx
 ```
 
-Per-project folder trees: [reference/src-folder-structure.md](reference/src-folder-structure.md)
+Per-project folder trees and layout choice (horizontal vs vertical): [reference/1_src-folder-structure.md](reference/1_src-folder-structure.md)
 
 **Dependency direction** (inward only):
 
@@ -83,9 +120,9 @@ Per-project folder trees: [reference/src-folder-structure.md](reference/src-fold
 | Project | Role |
 |---------|------|
 | **Api** | HTTP entry point, `Program.cs`, DI bootstrap; **maps DTOs ↔ domain at boundary** |
-| **App** | Business logic, enrichment, outbound mappers, client **interfaces** — **domain models only** |
-| **App.Models** | **Domain models** — webhooks, envelopes, entities; App's language |
-| **Infra** | Client implementations; **maps wire DTOs → domain** before returning to App |
+| **App** | Business logic, services, enrichment, client **interfaces** — **domain models only** |
+| **App.Models** | **Domain models** — entities, value objects, feature types; App's language |
+| **Infra** | Client implementations; **maps domain ↔ wire DTOs** at the external API boundary |
 | **Api.Models** | Public HTTP wire contracts (NuGet) — **not** used inside App (Only in Api) |
 
 ### Layer boundaries — DTO vs domain
@@ -94,71 +131,34 @@ Per-project folder trees: [reference/src-folder-structure.md](reference/src-fold
 
 | Boundary | Receives | Converts | Passes on |
 |----------|----------|----------|-----------|
-| **Api** | `Api.Models` / HTTP request DTOs | `Api/Mappers/` → domain | `App.Models` to App services |
-| **Infra** | External API wire DTOs (`Infra/.../Models/`) | Client mapping → domain | `App.Models` via `IClient` interfaces |
-| **App** | Domain models only | Business logic, enrichment | Domain / envelope to outbound mappers |
+| **Api** | `Api.Models` / HTTP request DTOs | `Api/Mappers/` — request/response DTO ↔ domain | `App.Models` to App services |
+| **Infra** | Domain from App; wire DTOs from external APIs | Client mapping — domain → wire request; wire response → domain | `App.Models` via `IClient` interfaces |
+| **App** | Domain models only | Business logic, enrichment | Domain models to Infra clients |
+
+### Inbound HTTP (Api → App)
 
 ```
-HTTP DTO → [Api mapper] → domain → App → IClient → Infra → wire DTO → [Infra map] → domain → App
-App domain → [Api mapper] → Api.Models response DTO → HTTP
+Inbound: HTTP → Api (map: request DTO → domain) → App
+```
+
+### Outbound HTTP (App → Api)
+
+```
+Response: App → Api (map: domain → response DTO) → HTTP
+```
+
+### Outbound call (App → Infra → external API)
+
+```
+Outgoing: App → Infra (map: domain → wire request DTO) → external API
+          → Infra (map: wire response DTO → domain) → App
 ```
 
 `App` must **not** reference `Api`, `Api.Models`, or Infra wire DTOs. Client interfaces in `App/Clients/` use **domain types only**.
 
-Full reference: [reference/layer-boundaries.md](reference/layer-boundaries.md)
+Full reference: [reference/2_layer-boundaries.md](reference/2_layer-boundaries.md)
 
-Every project `.csproj` uses the chapter `PropertyGroup` template. See [reference/csproj.md](reference/csproj.md).
-
-Client interfaces live in `App/Clients/Interfaces/`; implementations in `Infra/Clients/{Name}/`. **One client per downstream component** — never merge unrelated external systems into a single `I*` client. See [reference/downstream-clients.md](reference/downstream-clients.md).
-
-### ServiceInfo (`Suitsupply.Common.ServiceInfo`)
-
-Every Api host registers service metadata via **`AddServiceInfo`** — exposes version/environment info for dashboards, smoke tests, and `/api/home` (Functions) or `/` (Web App).
-
-**NuGet package (Api project):**
-
-| Host | Package |
-|------|---------|
-| Azure Functions | `Suitsupply.Common.ServiceInfo.Functions` |
-| ASP.NET Web App | `Suitsupply.Common.ServiceInfo.AspNet` |
-
-**Registration in `Program.cs`** — call early in `ConfigureServices`, before app services:
-
-```csharp
-using Common.ServiceInfo.Extensions;
-
-services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
-```
-
-**Required configuration** — part of the chapter **fail early** rule: every settings section uses FluentValidation + `ValidateOnStart()`. Missing or invalid values prevent the app from starting.
-
-| Key | Required | Rules |
-|-----|----------|-------|
-| `ServiceSettings:ServiceName` | Yes | Human-readable service name, minimum 3 characters |
-
-**Azure Functions** — `local.settings.json` (gitignored) and Azure app settings:
-
-```json
-{
-  "Values": {
-    "ServiceSettings__ServiceName": "{ServiceName}.Api"
-  }
-}
-```
-
-**ASP.NET Web App** — `appsettings.json` (and environment-specific overrides):
-
-```json
-{
-  "ServiceSettings": {
-    "ServiceName": "{ServiceName}.Api"
-  }
-}
-```
-
-**Response shape** (`GET /api/home` or `GET /`): `serviceName`, `assemblyVersion`, `environment`, `machineName`, `osDescription`. Used by `@smoke` integration tests for connectivity checks.
-
-Details: **write-src-code** §4.
+Every project `.csproj` uses the chapter `PropertyGroup` template. See [reference/5_csproj.md](reference/5_csproj.md).
 
 ### `devops/` layout
 
@@ -188,23 +188,80 @@ Infrastructure and delivery live under `devops/`, separate from application code
 
 ---
 
+## Chapter common packages
+
+Shared **Suitsupply** NuGet packages registered on every Api host. Registration details for new services: **write-src-code** §4.
+
+### ServiceInfo (`Suitsupply.Common.ServiceInfo`)
+
+Every Api host registers service metadata via **`AddServiceInfo`** — exposes version/environment info for dashboards, smoke tests, and `/api/home` (Functions) or `/` (Web App).
+
+**NuGet package (Api project):**
+
+| Host | Package |
+|------|---------|
+| Azure Functions | `Suitsupply.Common.ServiceInfo.Functions` |
+| ASP.NET Web App | `Suitsupply.Common.ServiceInfo.AspNet` |
+
+**Registration in `Program.cs`** — call early in `ConfigureServices`, before app services:
+
+```csharp
+using Common.ServiceInfo.Extensions;
+
+services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
+```
+
+**ServiceSettings** — configure before local runs or deployment:
+
+| Key | Required | Rules |
+|-----|----------|-------|
+| `ServiceSettings:ServiceName` | Yes | Human-readable service name, minimum 3 characters |
+
+**Azure Functions** — `local.settings.json` (gitignored) and Azure app settings:
+
+```json
+{
+  "Values": {
+    "ServiceSettings__ServiceName": "{ServiceName}.Api"
+  }
+}
+```
+
+**ASP.NET Web App** — `appsettings.json` (and environment-specific overrides):
+
+```json
+{
+  "ServiceSettings": {
+    "ServiceName": "{ServiceName}.Api"
+  }
+}
+```
+
+**Response shape** (`GET /api/home` or `GET /`): `serviceName`, `assemblyVersion`, `environment`, `machineName`, `osDescription`. Used by `@smoke` integration tests for connectivity checks.
+
+`ServiceSettings` validator and fail-early pattern: [Configuration validation (fail early)](#configuration-validation-fail-early), **write-src-code** [1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md).
+
+---
+
 ## 2. Naming conventions
 
 | Element | Convention | Example |
 |---------|------------|---------|
 | Projects | `{ServiceName}.{Layer}` PascalCase | `OrderSync.App` |
 | Namespaces | Mirror folder path | `OrderSync.App.Services.Processors` |
-| Interfaces | `I` prefix; file in **`Interfaces/`** subfolder | `App/Clients/Interfaces/IShopifyGraphQLClient.cs` |
-| Downstream clients | `I{Name}Client` or `I{Name}Publisher` — **never** `*ApiClient` | `IOrderHistoryClient`, `IMaoPublisher` |
-| Services | `{Feature}{Role}Service` | `FooCreatedReceiverService` |
-| Azure Functions | `{Feature}{Role}` | `FooCreatedReceiver` |
+| Interfaces | `I` prefix; file in **`Interfaces/`** subfolder | `App/Clients/Interfaces/IOrderHistoryClient.cs` |
+| Downstream clients | `I{Name}Client` or `I{Name}Publisher` | `IOrderHistoryClient`, `IOutboundEventPublisher` |
+| Services | `{Feature}{Role}Service` | `FooReceiverService`, `FooProcessorService` |
+| Azure Functions | `{Feature}{Role}` | `FooReceiver`, `FooProcessor` |
 | Async methods | `Async` suffix | `ProcessAsync` |
 | Methods | Name describes behaviour — reader should not need to open the body | `PublishOutboundEventAsync`, not `Handle` |
 | Constants | PascalCase static class | `ServiceBusConstants` |
-| Extension classes | `{Type}Extensions` — **not** `*Helper` | `ShopifyOrderExtensions`, `MoneyExtensions` |
+| Extension classes | `{Type}Extensions`; avoid helper | `OrderExtensions`, `MoneyExtensions` |
 | Test outer class | `{ClassUnderTest}Tests` static | `FooReceiverTests` |
 | Test method | `Should{Outcome}_When{Condition}` | `ShouldReturnAccepted_WhenPayloadValid` |
 | Positional records | One parameter per line | See write-src-code §5 |
+
+**Downstream client layout:** interfaces in `App/Clients/Interfaces/`; implementations in `Infra/Clients/{Name}/`. **One client per downstream component** — never merge unrelated external systems into a single `I*` client. See [4_downstream-clients.md](reference/4_downstream-clients.md).
 
 ---
 
@@ -216,8 +273,34 @@ Infrastructure and delivery live under `devops/`, separate from application code
 - **ConfigureAwait**: not required in ASP.NET Core / Azure Functions host code. Use `ConfigureAwait(false)` in library code only when you have measured need.
 - Avoid `async void` except event handlers.
 - Do not wrap sync code in `Task.Run` unless deliberately offloading CPU work.
+- **Independent I/O in parallel** — start async calls without `await`. For `Task<T>`, await each task for its result. For `Task` (no return), use `Task.WhenAll` when you only need to wait for all to finish. Do not parallelize when the second call needs the first result.
 
-See [examples/good-vs-bad.md](examples/good-vs-bad.md).
+```csharp
+// ✗ wrong — sequential when calls are independent
+await orderClient.GetByIdAsync(orderId, cancellationToken);
+await historyClient.GetByOrderIdAsync(orderId, cancellationToken);
+
+// ✓ correct — start both, then await each (no Task.WhenAll needed)
+var orderTask = orderClient.GetByIdAsync(orderId, cancellationToken);
+var historyTask = historyClient.GetByOrderIdAsync(orderId, cancellationToken);
+var order = await orderTask;
+var history = await historyTask;
+```
+
+Use **`Task.WhenAll`** when tasks return `Task` (no result) and you only need to wait for all to finish — there is nothing to await individually:
+
+```csharp
+// ✗ wrong — sequential when both are independent side effects
+await blobClient.UploadBackupAsync(backup, cancellationToken);
+await publisher.PublishOutboundAsync(outbound, cancellationToken);
+
+// ✓ correct — start both, then WhenAll (no return values to read)
+var backupTask = blobClient.UploadBackupAsync(backup, cancellationToken);
+var publishTask = publisher.PublishOutboundAsync(outbound, cancellationToken);
+await Task.WhenAll(backupTask, publishTask);
+```
+
+See [2_async.md](examples/2_async.md).
 
 ---
 
@@ -225,7 +308,8 @@ See [examples/good-vs-bad.md](examples/good-vs-bad.md).
 
 | Rule | Detail |
 |------|--------|
-| **Bubble up** | **App and Infra do not catch unexpected exceptions** — let them propagate to Api `Functions/` |
+| **Bubble up** | **Unrecoverable** exceptions propagate from App/Infra to Api `Functions/` — do not catch-and-log just to rethrow |
+| **Recover in App/Infra** | When a defined fallback exists (default value, skip optional step, return `null`) — catch the **specific** exception, `LogWarning` if useful, continue |
 | **Api boundary** | Catch in Function entry only; `LogError(ex, …)` then **rethrow** (`throw;`) or map to HTTP `500` / `IServiceBusRetryScheduler` |
 | Exceptions | Unrecoverable failures, HTTP pipeline errors, unexpected I/O failures |
 | Result types | Expected business-rule failures the caller must handle (`Result<T>`, etc.) — prefer in App layer |
@@ -234,13 +318,13 @@ See [examples/good-vs-bad.md](examples/good-vs-bad.md).
 | Azure Functions HTTP | Catch → `LogError` → `ObjectResult` 500 |
 | Azure Functions Service Bus | Catch → `LogError`/`LogWarning` → retry scheduler (no rethrow) or `throw` when no scheduler |
 | **Process entry** | **First log** after guards with ids **available at that layer** — `{Function}` / `{MessageId}` at Api; business ids (e.g. `{OrderId}`) in App after deserialize |
-| **Errors** | Logged at **Api layer** with `LogError(ex, …)` — App does not catch-and-log unexpected failures |
+| **Errors** | Unrecoverable failures logged at **Api** with `LogError(ex, …)` — recoverable failures handled in App/Infra with fallback; no catch-and-rethrow |
 | **Info logs** | Beyond process entry: only when they help **troubleshooting** or **dashboards** |
 | Log format | Single-line structured templates; `{NamedProperties}`; no multi-line messages |
 | Guard clauses | `ArgumentNullException.ThrowIfNull` / `ArgumentException.ThrowIfNullOrWhiteSpace` at public entry points |
-| Broad catch | **Api layer only** — CA1031 justified at Function boundaries |
+| Broad catch | **`catch (Exception)` at Api only** — in App/Infra, catch **specific** exceptions only when a recovery path exists |
 
-Full guides: [reference/exception-handling.md](reference/exception-handling.md), [reference/observability-logging.md](reference/observability-logging.md). Examples: [examples/good-vs-bad.md](examples/good-vs-bad.md).
+Full guides: [reference/7_exception-handling.md](reference/7_exception-handling.md), [reference/8_observability-logging.md](reference/8_observability-logging.md). Examples: [examples/1_good-vs-bad.md](examples/1_good-vs-bad.md).
 
 ---
 
@@ -251,6 +335,8 @@ Full guides: [reference/exception-handling.md](reference/exception-handling.md),
 - `ThrowIfNull` / `ThrowIfNullOrWhiteSpace` at boundaries — no manual `if (x == null) throw`.
 - Avoid `!` unless proven safe after a guard.
 - Prefer empty collections over null returns for collections.
+
+Examples: [3_nullability.md](examples/3_nullability.md).
 
 ---
 
@@ -266,7 +352,7 @@ Full guides: [reference/exception-handling.md](reference/exception-handling.md),
 - **No service locator** — ban `IServiceProvider.GetService` in business code.
 - Register infra in `Infra/Extensions/ServiceCollectionExtensions.AddInfrastructure()`.
 - Register App services in host `Program.cs`.
-- **Configuration (fail early):** every settings class bound from `IConfiguration` must use `AddOptions<T>().Bind(...).ValidateOnStart()` with a FluentValidation `AbstractValidator<T>` via `FluentValidateOptions<T>`. The host must not start with missing or invalid config. See **Configuration validation** below and **write-src-code** [reference/configuration-validation.md](../write-src-code/reference/configuration-validation.md).
+- **Configuration (fail early):** every settings class bound from `IConfiguration` must use `AddOptions<T>().Bind(...).ValidateOnStart()` with a FluentValidation `AbstractValidator<T>` via `FluentValidateOptions<T>`. The host must not start with missing or invalid config. See **Configuration validation** below and **write-src-code** [reference/1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md).
 
 Details and registration checklist: **write-src-code** §3–4.
 
@@ -288,7 +374,7 @@ Details and registration checklist: **write-src-code** §3–4.
 
 **Blocking in code review:** new or changed settings without startup validation.
 
-Full pattern: **write-src-code** [reference/configuration-validation.md](../write-src-code/reference/configuration-validation.md)
+Full pattern: **write-src-code** [reference/1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md)
 
 ---
 
@@ -307,26 +393,29 @@ Full pattern: **write-src-code** [reference/configuration-validation.md](../writ
 
 **PR size:** prefer &lt;400 lines changed; one logical change per PR.
 
+**Boy scout rule:** clean up what you touch (format, minor fixes) — but **separate PR**. Do not mix formatting or unrelated cleanup with your feature or bugfix change.
+
 **Reviewer checklist:**
 - [ ] `dotnet format` run — no unformatted diffs; VS **Code Cleanup** applied when developed in Visual Studio
 - [ ] Tests prove observable behaviour, not internals
 - [ ] DI lifetimes correct
 - [ ] Every new or changed settings class has FluentValidation + `ValidateOnStart()` (fail early)
 - [ ] Entry logs use ids available at that layer (`{Function}` / `{MessageId}` at Api; business ids in App after deserialize)
-- [ ] Unexpected exceptions bubble from App/Infra — logged only at Api `Functions/` (rethrow, HTTP 500, or retry scheduler)
+- [ ] Unrecoverable exceptions bubble from App/Infra — logged at Api `Functions/` (rethrow, HTTP 500, or retry scheduler)
+- [ ] Recoverable failures in App/Infra use a defined fallback — specific `catch`, not catch-and-rethrow
 - [ ] Informational logs beyond entry are justified (troubleshooting / dashboards only)
 - [ ] No secrets or env-specific values committed
 - [ ] Methods and classes have **single responsibility** — one reason to change, one task per method
 - [ ] Orchestration methods use **named private methods** for distinct actions — `ProcessAsync` is readable at a glance
 - [ ] Api converts inbound DTOs → domain before calling App; outbound domain → `Api.Models` DTO
-- [ ] Infra converts wire DTOs → domain before returning from `IClient`; App never sees Infra `Models/`
+- [ ] Infra converts wire DTOs → domain before returning from `IClient`; maps domain → wire DTO before send/publish; App never sees Infra `Models/`
 - [ ] Each downstream component has its own client (`App/Clients/Interfaces/` + `Infra/Clients/{Name}/`) — no god-clients
-- [ ] New interfaces live in **`Interfaces/`** folders — not beside implementations (see [interfaces.md](reference/interfaces.md))
-- [ ] Mapper contains no business logic — decisions and enrichment done before `Map()`
+- [ ] New interfaces live in **`Interfaces/`** folders — not beside implementations (see [3_interfaces.md](reference/3_interfaces.md))
+- [ ] Api/Infra mapper contains no business logic — decisions and enrichment done before mapping
 - [ ] Repeated logic extracted (base class, factory, pipeline, or **extension methods**) — no copy-paste of flows; no new `*Helper` classes
 - [ ] No unnecessary comments or XML doc noise
 - [ ] Parameters not mutated; records used for immutable data
-- [ ] Logic-free files (`Settings`, DI wiring, Infra wire DTOs) and **Infra client implementations** have `[ExcludeFromCodeCoverage]`; App services, validators, and mappers do not
+- [ ] Logic-free files (`Settings`, DI wiring, Infra wire DTOs) and **Infra client implementations** have `[ExcludeFromCodeCoverage]`; App services, validators, and Infra mappers do not
 
 ---
 
@@ -334,14 +423,14 @@ Full pattern: **write-src-code** [reference/configuration-validation.md](../writ
 
 **Single Responsibility is non-negotiable.** Every class and every method should do **one thing** and do it well. This is the default lens for all production code — not an optional refactor note.
 
-**Reference files** (illustrative `.cs` with chapter examples): [reference/principles-and-patterns.md](reference/principles-and-patterns.md)
+**Reference files** (illustrative `.cs` with chapter examples): [reference/11_principles-and-patterns.md](reference/11_principles-and-patterns.md)
 
 | Principles | Patterns |
 |------------|----------|
-| [1_SOLID.cs](reference/principles/1_SOLID.cs) | [factory-pattern.cs](reference/patterns/factory-pattern.cs) |
-| [2_DRY.cs](reference/principles/2_DRY.cs) | [strategy-pattern.cs](reference/patterns/strategy-pattern.cs) |
-| [3_KISS.cs](reference/principles/3_KISS.cs) | [template-method-pattern.cs](reference/patterns/template-method-pattern.cs) |
-| [4_YAGNI.cs](reference/principles/4_YAGNI.cs) | [decorator-pattern.cs](reference/patterns/decorator-pattern.cs) |
+| [1_SOLID.cs](reference/principles/1_SOLID.cs) | [1_factory-pattern.cs](reference/patterns/1_factory-pattern.cs) |
+| [2_DRY.cs](reference/principles/2_DRY.cs) | [2_strategy-pattern.cs](reference/patterns/2_strategy-pattern.cs) |
+| [3_KISS.cs](reference/principles/3_KISS.cs) | [3_template-method-pattern.cs](reference/patterns/3_template-method-pattern.cs) |
+| [4_YAGNI.cs](reference/principles/4_YAGNI.cs) | [4_decorator-pattern.cs](reference/patterns/4_decorator-pattern.cs) |
 | [5_SeparationOfConcerns.cs](reference/principles/5_SeparationOfConcerns.cs) | |
 | [6_Encapsulation.cs](reference/principles/6_Encapsulation.cs) | |
 | [7_CompositionOverInheritance.cs](reference/principles/7_CompositionOverInheritance.cs) | |
@@ -370,16 +459,16 @@ Use chapter conventions and well-known patterns **by default** — do not reinve
 | **SOLID** | DIP, SRP, OCP across layers | [1_SOLID.cs](reference/principles/1_SOLID.cs) |
 | **DRY** | Base classes, factories, shared mappers | [2_DRY.cs](reference/principles/2_DRY.cs) |
 | **KISS / YAGNI** | Simple pipelines; extract on real pain | [3_KISS.cs](reference/principles/3_KISS.cs), [4_YAGNI.cs](reference/principles/4_YAGNI.cs) |
-| **Separation of concerns** | Api / App / Infra; **DTO↔domain at Api and Infra edges** | [5_SeparationOfConcerns.cs](reference/principles/5_SeparationOfConcerns.cs), [layer-boundaries.md](reference/layer-boundaries.md) |
+| **Separation of concerns** | Api / App / Infra; **DTO↔domain at Api and Infra edges** | [5_SeparationOfConcerns.cs](reference/principles/5_SeparationOfConcerns.cs), [2_layer-boundaries.md](reference/2_layer-boundaries.md) |
 | **Encapsulation** | `internal` Infra, `IOptions<T>`, immutable DTOs | [6_Encapsulation.cs](reference/principles/6_Encapsulation.cs) |
 | **Composition over inheritance** | DI, shallow bases, decorators | [7_CompositionOverInheritance.cs](reference/principles/7_CompositionOverInheritance.cs) |
-| **Template Method** | `ReceiverServiceBase<T>` — shared receive flow | [template-method-pattern.cs](reference/patterns/template-method-pattern.cs) |
-| **Strategy / Handler** | `FlowHandlers/` — one handler per scenario | [strategy-pattern.cs](reference/patterns/strategy-pattern.cs) |
-| **Factory** | `ITransactionFlowHandlerFactory`, `IStarWarsClientFactory` | [factory-pattern.cs](reference/patterns/factory-pattern.cs) |
-| **Decorator** | `StarWarsServiceLoggingDecorator`, Scrutor `Decorate<>` | [decorator-pattern.cs](reference/patterns/decorator-pattern.cs) |
-| **Pipeline** | `EnrichmentPipeline` + discrete steps | [enrichment-and-mappers.md](../write-src-code/reference/enrichment-and-mappers.md) |
-| **Mapper** | Shape translation only — **no business logic**; enrich first via envelope/domain model | **write-src-code** §6, [enrichment-and-mappers.md](../write-src-code/reference/enrichment-and-mappers.md) |
-| **Options + validation** | `IOptions<T>` + FluentValidation fail-early | [configuration-validation.md](../write-src-code/reference/configuration-validation.md) |
+| **Template Method** | Shared algorithm + hooks in `abstract` base | [3_template-method-pattern.cs](reference/patterns/3_template-method-pattern.cs) |
+| **Strategy / Handler** | One handler per scenario + factory | [2_strategy-pattern.cs](reference/patterns/2_strategy-pattern.cs) |
+| **Factory** | `I*Factory` resolves variant handlers/clients | [1_factory-pattern.cs](reference/patterns/1_factory-pattern.cs) |
+| **Decorator** | Cross-cutting logging/metrics via `Decorate<>` | [4_decorator-pattern.cs](reference/patterns/4_decorator-pattern.cs) |
+| **Pipeline** | Multi-step flow with discrete steps (integration services) | [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md) |
+| **Mapper** | Api/Infra shape translation only — **no business logic**; **not** in App | **write-src-code** §6, [2_layer-boundaries.md](reference/2_layer-boundaries.md) |
+| **Options + validation** | `IOptions<T>` + FluentValidation fail-early | [1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md) |
 
 When adding behaviour, **extend the existing pattern** in the repo before introducing a parallel approach.
 
@@ -389,31 +478,32 @@ Repeated code is a design smell. When the same sequence appears **twice**, note 
 
 | Duplication type | Prefer |
 |------------------|--------|
-| Same algorithm, different hooks (blob path, event type, queue name) | **`abstract` base class** — e.g. `ReceiverServiceBase<T>`, `OutboundLineProductMapperBase` |
-| Same caller, behaviour varies by type/key | **Factory** + strategy/handler per variant — e.g. `IFlowHandlerFactory` |
-| Same multi-step flow, steps reusable | **Pipeline** + one class per step |
-| Same pure calculation on a model, no instance state | **Extension methods** on the type — `{Type}Extensions` in `App/Extensions/` (see [extensions-vs-helpers.md](reference/extensions-vs-helpers.md)) |
+| Same algorithm, different hooks (path, id, tags) | **`abstract` base class** — e.g. shared ingest base, Infra `OutboundLineMapperBase` |
+| Same caller, behaviour varies by type/key | **Factory** + strategy/handler per variant |
+| Same multi-step flow, steps reusable | **Pipeline** + one class per step (integration services) |
+| Same pure calculation on a model, no instance state | **Extension methods** on the type — `{Type}Extensions` in `App/Extensions/` (see [9_extensions-vs-helpers.md](reference/9_extensions-vs-helpers.md)) |
 | Same test arrangement | **Abstract test base** + `FixtureFactory` helpers |
 
 ```csharp
-// ✗ wrong — third receiver copy-pasting deserialize → backup → queue
-public sealed class BarReceiver { /* 40 lines identical to FooReceiver */ }
+// ✗ wrong — third copy of the same ingest flow
+public sealed class BarIngestService { /* 40 lines identical to FooIngestService */ }
 
-// ✓ correct — shared flow in base; subclass owns only what differs
-public sealed class BarCreatedReceiverService(…) : ReceiverServiceBase<BarWebhookRequest>(…)
+// ✓ correct — shared flow in abstract base; subclass owns only what differs
+public sealed class BarIngestService(…) : IngestServiceBase<BarInboundEvent>(…)
 {
-    protected override EventType EventType => EventType.BarCreated;
-    protected override string BuildBlobPath(BarWebhookRequest model) => …;
+    protected override string BuildStoragePath(BarInboundEvent model) => …;
 }
 ```
 
+Integration example: `ReceiverServiceBase<T>` in `shopifyintegration` — see [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md).
+
 **Do not over-abstract:** one-off duplication of a few lines does not need a framework — see [4_YAGNI.cs](reference/principles/4_YAGNI.cs). Extract when repetition is real and the variation point is clear.
 
-Details and templates: **write-src-code** §1, §6, [azure-functions.md](../write-src-code/reference/azure-functions.md), [enrichment-and-mappers.md](../write-src-code/reference/enrichment-and-mappers.md), [examples/good-vs-bad.md](examples/good-vs-bad.md), [reference/principles-and-patterns.md](reference/principles-and-patterns.md).
+Details and templates: **write-src-code**, [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md), [examples/1_good-vs-bad.md](examples/1_good-vs-bad.md), [reference/11_principles-and-patterns.md](reference/11_principles-and-patterns.md).
 
 ---
 
-## 9. Code clarity and style
+## 8. Code clarity and style
 
 **Less is more.** Keep code and comments as short as possible.
 
@@ -423,33 +513,45 @@ Details and templates: **write-src-code** §1, §6, [azure-functions.md](../writ
 | **Extensions over Helpers** | Small pure logic on a model → `{Type}Extensions` with `this` receiver — **never** `*Helper` classes in `src/` |
 | **Interfaces in `Interfaces/`** | Every `I*` contract in an `Interfaces/` subfolder — implementations in parent folder |
 | Method names | Must explain what the method does — the name is the primary documentation |
-| **Extract named steps** | Group each distinct action into a **private method** with a descriptive name (`PublishEventToMaoAsync`) — orchestration methods read as a short sequence of steps. See [named-private-methods.md](reference/named-private-methods.md) |
+| **Extract named steps** | Group each distinct action into a **private method** with a descriptive name (`PublishOutboundEventAsync`) — orchestration methods read as a short sequence of steps. See [10_named-private-methods.md](reference/10_named-private-methods.md) |
 | Method length | Short methods; if it does more than one thing, extract private methods or new types |
 | Class length | One responsibility per class; prefer several focused types over one orchestrator |
 | Comments | **No comments** unless the code cannot speak for itself: complex algorithms, non-obvious business rules, or documented assumptions. Applies to `//`, `/* */`, and **`///` XML doc comments** |
 | XML docs | Do not add `///` summary noise on self-explanatory members. Reserve for published public API surfaces where consumers need contract docs |
 | Records | Prefer `record` / positional records for immutable DTOs and value objects |
-| Parameter mutation | Never modify an object passed as a parameter — construct a copy and return it (see [examples/good-vs-bad.md](examples/good-vs-bad.md)) |
-| Logging | Always **single-line** structured templates; entry log with correlation ids; log all errors; sparse info — see [observability-logging.md](reference/observability-logging.md) |
-| **Format before commit** | Run **`dotnet format`** and VS **Code Cleanup** — see [editorconfig.md](reference/editorconfig.md#apply-before-commit) |
+| Parameter mutation | Never modify an object passed as a parameter — construct a copy and return it (see [8_style-and-performance.md](examples/8_style-and-performance.md#immutability)) |
+| Logging | Always **single-line** structured templates; entry log with correlation ids; log all errors; sparse info — see [8_observability-logging.md](reference/8_observability-logging.md) |
+| **Format before commit** | Run **`dotnet format`** and VS **Code Cleanup** — see [6_editorconfig.md](reference/6_editorconfig.md#apply-before-commit) |
 | Readability | **Readability over optimisation** — clear code first; optimise only with evidence (profiler, benchmark, production metrics) |
 | LINQ chains | Multi-line: `=` on first line, **source object on the next line**, then **one operator per line** (see below) |
 | Method signatures | **Single line** — classes, constructors, and methods on one line unless longer than **160 characters** (positional `record` parameters excepted) |
 | Blank line before final `return` | Insert one empty line before the method's **last** `return` — **exempt** only between `Log*` and `return` (log may sit directly above `return`; blank line still required before the log) |
+| **Return directly** | Do not assign to a local only to `return` it on the next line — `return` the expression directly |
+
+```csharp
+// ✗ wrong — needless local used only for return
+var names = items.Select(i => i.Name);
+return names;
+
+// ✓ correct
+return items.Select(i => i.Name);
+```
+
+Use a local when it improves readability (multiple uses, debugging, or a long chain with a meaningful name).
 
 **LINQ formatting** — when a chain does not fit on one line:
 
 ```csharp
-var raw =
-    metafields?.Edges?
-        .Select(e => e.Node)
-        .OfType<Metafield>()
-        .FirstOrDefault(n => n.Namespace == AdyenNamespace && n.Key == TransactionDetailsKey)
+var active =
+    items?
+        .Where(i => i.IsActive)
+        .OrderBy(i => i.Priority)
+        .FirstOrDefault(i => i.Code == targetCode)
         ?.Value;
 ```
 
 - Assignment (`var name =`) ends the first line.
-- Source expression (`metafields?.Edges?`) starts on the next line, indented once.
+- Source expression (`items?`) starts on the next line, indented once.
 - Each subsequent operator (`.Select`, `.Where`, `.FirstOrDefault`, …) on its own line, indented one level deeper than the source.
 - Nullable continuation (`?.Value`) stays on the same line as the last operator when it belongs to that call.
 - Short chains that fit within **160 characters** may stay on one line.
@@ -458,7 +560,7 @@ Details and templates: **write-src-code** general conventions.
 
 ---
 
-## 8. Performance
+## 9. Performance
 
 - **Readability over optimisation** — prefer clear code; do not micro-optimise without measured need.
 - Default to clarity — optimize with evidence.
@@ -474,7 +576,7 @@ Details and templates: **write-src-code** general conventions.
 
 Chapter standard enforced at build time with `EnforceCodeStyleInBuild` and `TreatWarningsAsErrors`.
 
-**Before every commit:** run **`dotnet format`** and, in Visual Studio, **Code Cleanup** (Analyze → Code Cleanup → Run Code Cleanup, or **Ctrl+K**, **Ctrl+E**). See [reference/editorconfig.md](reference/editorconfig.md#apply-before-commit).
+**Before every commit:** run **`dotnet format`** and, in Visual Studio, **Code Cleanup** (Analyze → Code Cleanup → Run Code Cleanup, or **Ctrl+K**, **Ctrl+E**). See [reference/6_editorconfig.md](reference/6_editorconfig.md#apply-before-commit).
 
 **Error-level rules (must pass CI):**
 
@@ -491,7 +593,7 @@ Chapter standard enforced at build time with `EnforceCodeStyleInBuild` and `Trea
 - CA2007 (`ConfigureAwait`) — disabled; not required in host code
 - CS8618 — disabled; use `required`/`init` instead
 
-Full annotated reference: [reference/editorconfig.md](reference/editorconfig.md)
+Full annotated reference: [reference/6_editorconfig.md](reference/6_editorconfig.md)
 
 Copy to new repos: [reference/editorconfig](reference/editorconfig)
 
@@ -511,9 +613,9 @@ Every `src/` and `test/` `.csproj` includes three `PropertyGroup` blocks **befor
 
 **Api.Models** adds `PackageId` in the metadata group for NuGet publish.
 
-Full templates and per-project descriptions: [reference/csproj.md](reference/csproj.md)
+Full templates and per-project descriptions: [reference/5_csproj.md](reference/5_csproj.md)
 
-Pair with `.editorconfig` (see [reference/editorconfig.md](reference/editorconfig.md)).
+Pair with `.editorconfig` (see [reference/6_editorconfig.md](reference/6_editorconfig.md)).
 
 ### Code coverage exclusions
 
@@ -523,11 +625,11 @@ Mark files **without testable logic** with `[ExcludeFromCodeCoverage]` so covera
 |----------|----------|
 | Settings records | `FooSettings`, `ServiceBusOptions`, `MessageRetryOptions` |
 | DI wiring | `Program`, `ServiceCollectionExtensions` |
-| **Infra client implementations** | `FooClient`, `MaoPubSubPublisher`, `StoreServiceBusClient` — covered by component/integration tests, not unit-tested in isolation |
+| **Infra client implementations** | `FooClient`, `OutboundEventPublisher` — covered by component/integration tests, not unit-tested in isolation |
 | Pure DTOs / deserialization models | Infra `Clients/.../Models/` wire shapes with no behaviour |
-| Thin logging wrappers (optional) | `ReceiverLoggingExtensions`, `ProcessorLoggingExtensions` — when many call sites; not required |
+| Thin logging wrappers (optional) | Prefix logging extensions when many call sites — not required |
 
-**Do not** apply to **App** behavioural code — services, validators, mappers, enrichment steps. App validators are unit-tested; settings records are excluded because they are property bags only.
+**Do not** apply to **App** behavioural code — services, validators. **Do** unit-test Infra mappers. App validators are unit-tested; settings records are excluded because they are property bags only.
 
 `{ServiceName}.App.Models` may use assembly-level exclusion in `.csproj` when the project is DTOs only:
 
@@ -543,8 +645,8 @@ Details: **write-src-code** general conventions.
 
 ## Examples
 
-Cross-cutting good/bad patterns: [examples/good-vs-bad.md](examples/good-vs-bad.md)
+Cross-cutting good/bad patterns: [1_good-vs-bad.md](examples/1_good-vs-bad.md) (index)
 
-Production templates: **write-src-code** `examples/`
+Production templates: **write-src-code** — [examples/](../write-src-code/examples/)
 
-Test templates: **write-unit-tests**, **write-component-tests**, **write-integration-tests** `examples/`
+Test templates: **write-unit-tests**, **write-component-tests**, **write-integration-tests** — each skill's `examples/` folder

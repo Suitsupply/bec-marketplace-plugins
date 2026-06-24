@@ -2,11 +2,7 @@
 // Chapter: primary-constructor DI, shallow inheritance (base + hooks), handlers composed via factory.
 
 // ✓ CORRECT — processor composes pipeline, mapper, publisher (no mega base class)
-public sealed class FooProcessorService(
-    IFooEnrichmentPipeline enrichmentPipeline,
-    IOutboundFooMapper mapper,
-    IMaoPublisher publisher,
-    IServiceBusClient serviceBusClient)
+public sealed class FooProcessorService(IFooEnrichmentPipeline enrichmentPipeline, IOutboundFooMapper mapper, IMaoPublisher publisher, IStoreServiceBusClient storeServiceBusClient)
 {
     public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken)
     {
@@ -44,19 +40,4 @@ public static class SkuFormatter
     public static string Format(string sku) => sku.Trim().ToUpperInvariant();
 }
 
-// Decorator is composition: wrap inner implementation (see patterns/decorator-pattern.cs)
-
-interface IFooEnrichmentPipeline { Task RunAsync(EnrichmentEnvelope<FooWebhookRequest> e, CancellationToken ct); }
-interface IOutboundFooMapper { FooMaoModel? Map(EnrichmentEnvelope<FooWebhookRequest> e); }
-interface IMaoPublisher { Task PublishAsync(FooMaoModel payload, CancellationToken ct); }
-interface IServiceBusClient { }
-record EnrichmentEnvelope<T>(T Source);
-record FooWebhookRequest;
-record BarWebhookRequest(string Id);
-record FooMaoModel;
-abstract class ReceiverServiceBase<T>(ILogger logger, IBlobStorageClient storage, IServiceBusClient bus)
-{
-    protected abstract string BuildBlobPath(T model);
-}
-interface ILogger { }
-interface IBlobStorageClient { }
+// Decorator is composition: wrap inner implementation (see patterns/4_decorator-pattern.cs)

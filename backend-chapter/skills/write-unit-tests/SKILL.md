@@ -9,13 +9,22 @@ description: >-
 
 # Write Unit Tests
 
+See **write-tests** for the testing pyramid and when to add unit vs component vs integration tests.
+
+## Examples
+
+| # | File | Topic |
+|---|------|-------|
+| 1 | [1_test-class-layout.cs](examples/1_test-class-layout.cs) | Base/derived test class layout |
+| 2 | [2_null-argument-checks.cs](examples/2_null-argument-checks.cs) | `ArgumentsNullChecker` usage |
+
+---
+
 ## Project conventions
 
 - **Framework**: NUnit 3, Moq, AutoFixture (with AutoMoq and NUnit3 extensions)
 - **Global usings** (no need to import): `AutoFixture`, `AutoFixture.AutoMoq`, `AutoFixture.NUnit3`, `Moq`, `NUnit.Framework`
 - **Assembly**: Each test class runs with a fresh instance per test (`FixtureLifeCycle.InstancePerTestCase` in `AssemblyInfo.cs`)
-
-See also **write-tests** skill for the testing pyramid and when to add unit vs component vs integration tests.
 
 ## FixtureFactory
 
@@ -131,7 +140,7 @@ Examples:
 | **App/Services** | Business orchestration with mocked dependencies |
 | **App/Services/Processors/Flows** | Individual transaction flow handlers (Klarna, refund, etc.) |
 | **App/Enrichment/Steps** | Single-step behaviour with mocked clients |
-| **App/Mappers** | Shape translation only — given enriched envelope/domain model; no business rules |
+| **Infra/Clients/…/Mappers** | Shape translation only — given domain or enriched context; no business rules |
 | **App/Extensions** | Pure extension methods on domain models (`{Type}Extensions`) |
 | **Infra/Clients** | HTTP client behaviour (mock `HttpMessageHandler` or use test server) |
 | **Infra/Validators** | FluentValidation rules for settings records |
@@ -306,9 +315,3 @@ public static class FetchOrderStepTests
 - [ ] All tests have `// Arrange`, `// Act`, `// Assert`
 - [ ] Test names follow `Should{Outcome}_When{Condition}`
 - [ ] No `using` for globally available namespaces (AutoFixture, Moq, NUnit.Framework)
-
-
-## Examples
-
-- [examples/test-class-layout.cs](examples/test-class-layout.cs)
-- [examples/null-argument-checks.cs](examples/null-argument-checks.cs)

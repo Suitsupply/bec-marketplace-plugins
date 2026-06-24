@@ -1,7 +1,7 @@
 // Template Method pattern — base class defines the algorithm skeleton; subclasses override specific steps.
 // Chapter: ReceiverServiceBase<TModel> — shared deserialize → backup → queue flow.
 
-public abstract class ReceiverServiceBase<TModel>(ILogger logger, IBlobStorageClient storageClient, IServiceBusClient serviceBusClient)
+public abstract class ReceiverServiceBase<TModel>(ILogger logger, IEventBlobStorageClient eventBlobStorageClient, IStoreServiceBusClient storeServiceBusClient)
     where TModel : class
 {
     // Template method — fixed sequence, not overridable
@@ -28,14 +28,14 @@ public abstract class ReceiverServiceBase<TModel>(ILogger logger, IBlobStorageCl
 
     private async Task BackupAsync(string rawJson, TModel model, CancellationToken cancellationToken)
     {
-        await storageClient.UploadBlobAsync(EventType, GetPath(model), rawJson, GetTags(model), cancellationToken);
+        await eventBlobStorageClient.UploadBlobAsync(EventType, GetPath(model), rawJson, GetTags(model), cancellationToken);
         logger.LogInformation("Backup saved for {EventType}", EventType);
     }
 
     private async Task SendToQueueAsync(string rawJson, TModel model, CancellationToken cancellationToken)
     {
         var messageId = GetMessageId(model);
-        await serviceBusClient.SendToProcessorQueueAsync(EventType, rawJson, messageId, GetTags(model), cancellationToken);
+        await storeServiceBusClient.SendToProcessorQueueAsync(EventType, rawJson, messageId, GetTags(model), cancellationToken);
     }
 
     private void LogReceiverEvent(TModel model) =>
@@ -43,12 +43,7 @@ public abstract class ReceiverServiceBase<TModel>(ILogger logger, IBlobStorageCl
 }
 
 // Concrete implementation — only hooks, no duplicated flow
-public sealed class OrderCreatedReceiverService(
-    ILogger<OrderCreatedReceiverService> logger,
-    IBlobStorageClient storageClient,
-    IServiceBusClient serviceBusClient)
-    : ReceiverServiceBase<OrderCreatedWebhookRequest>(logger, storageClient, serviceBusClient),
-      IOrderCreatedReceiverService
+public sealed class OrderCreatedReceiverService(ILogger<OrderCreatedReceiverService> logger, IEventBlobStorageClient eventBlobStorageClient, IStoreServiceBusClient storeServiceBusClient) : ReceiverServiceBase<OrderCreatedWebhookRequest>(logger, eventBlobStorageClient, storeServiceBusClient), IOrderCreatedReceiverService
 {
     protected override EventType EventType => EventType.OrderCreated;
 
@@ -65,10 +60,3 @@ public sealed class OrderCreatedReceiverService(
 // ✓ CORRECT — extend ReceiverServiceBase; override hooks only
 
 // Mapper bases use the same idea: OutboundLineProductMapperBase with MapCore() + subclass specifics.
-
-enum EventType { OrderCreated }
-record OrderCreatedWebhookRequest(string Id, string Name);
-interface IOrderCreatedReceiverService { }
-interface ILogger<T> { void LogInformation(string message, params object[] args); }
-interface IBlobStorageClient { Task UploadBlobAsync(EventType e, string path, string content, IDictionary<string, string> tags, CancellationToken ct); }
-interface IServiceBusClient { Task SendToProcessorQueueAsync(EventType e, string body, string messageId, IDictionary<string, string> tags, CancellationToken ct); }

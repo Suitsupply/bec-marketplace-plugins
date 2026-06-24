@@ -1,6 +1,8 @@
 # Infra Clients
 
-**One client per downstream component.** Each external HTTP API, queue, blob store, or pub/sub target gets its own `I*` interface, `Infra/Clients/{Name}/` folder, settings, validator, and `Add*Client` registration. Do not combine unrelated downstreams into a god-client. See [../../dotnet-best-practices/reference/downstream-clients.md](../../dotnet-best-practices/reference/downstream-clients.md).
+> Reference **2** — Interface, implementation, settings, validator, and DI registration for a new downstream client.
+
+**One client per downstream component.** Each external HTTP API, queue, blob store, or pub/sub target gets its own `I*` interface, `Infra/Clients/{Name}/` folder, settings, validator, and `Add*Client` registration. Do not combine unrelated downstreams into a god-client. See [../../dotnet-best-practices/reference/4_downstream-clients.md](../../dotnet-best-practices/reference/4_downstream-clients.md).
 
 Adding a **new** downstream dependency requires these artifacts:
 1. **Interface** — `App/Clients/Interfaces/IFooClient.cs` — **domain types only** in signature
@@ -10,7 +12,7 @@ Adding a **new** downstream dependency requires these artifacts:
 5. **Settings** — `Infra/Clients/FooClient/Settings/FooSettings.cs` (`[ExcludeFromCodeCoverage]` record)
 6. **Validator** — `Infra/Clients/FooClient/Validators/FooSettingsValidator.cs` (FluentValidation, **required** — fail early at startup)
 
-**Infra receives wire DTOs from external APIs and converts to domain models before returning to App.** App must never reference `Infra/.../Models/`. See [../../dotnet-best-practices/reference/layer-boundaries.md](../../dotnet-best-practices/reference/layer-boundaries.md).
+**Infra receives wire DTOs from external APIs and converts to domain models before returning to App.** App must never reference `Infra/.../Models/`. See [../../dotnet-best-practices/reference/2_layer-boundaries.md](../../dotnet-best-practices/reference/2_layer-boundaries.md).
 
 ## Interface (App — domain only)
 
@@ -45,7 +47,7 @@ internal sealed class FooClient(HttpClient httpClient) : IFooClient
 
 ## Registration
 
-Every settings record follows [configuration-validation.md](configuration-validation.md). Registration **must** include `ValidateOnStart()`:
+Every settings record follows [1_configuration-validation.md](1_configuration-validation.md). Registration **must** include `ValidateOnStart()`:
 
 In `Infra/Extensions/ServiceCollectionExtensions.cs`:
 
@@ -63,4 +65,4 @@ services.AddHttpClient<IFooClient, FooClient>()
     });
 ```
 
-Example implementation: [../examples/infra-client.cs](../examples/infra-client.cs)
+Example implementation: [../examples/7_infra-client.cs](../examples/7_infra-client.cs)

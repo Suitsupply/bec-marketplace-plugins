@@ -1,18 +1,25 @@
 // Layer boundaries — DTO vs domain model separation.
 // App works ONLY with App.Models domain types. Api and Infra convert at their edges.
-// See: layer-boundaries.md
+// See: 2_layer-boundaries.md
 
 // ========== API LAYER — receives DTOs, passes domain to App ==========
 
 // Api.Models — public HTTP request contract (wire DTO)
-namespace {ServiceName}.Api.Models.Order.Requests;
+using System.Text.Json.Serialization;
 
-public record FooCreatedRequestDto(string Id, string Name);
+namespace {ServiceName}.Api.Models.Order.Transport.Requests;
+
+public record FooCreatedRequestDto(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("name")] string Name);
 
 // App.Models — domain model
-namespace {ServiceName}.App.Models.Webhooks;
+namespace {ServiceName}.App.Models.Order.Models;
 
-public record FooCreatedWebhook(string Id, string Name, DateTimeOffset ReceivedAt);
+public record FooCreatedWebhook(
+    string Id,
+    string Name,
+    DateTimeOffset ReceivedAt);
 
 // Api/Mappers — boundary conversion (no business logic)
 namespace {ServiceName}.Api.Mappers;
@@ -37,7 +44,7 @@ public sealed class FooWebhookMapper : IFooWebhookMapper
 // App service — domain only; never sees Api.Models
 namespace {ServiceName}.App.Services.Receivers;
 
-public interface IFooCreatedReceiverService
+public interface IFooReceiverService
 {
     Task ProcessAsync(FooCreatedWebhook domain, CancellationToken cancellationToken);
 }
@@ -47,18 +54,22 @@ public interface IFooCreatedReceiverService
 // Infra wire DTO — internal; never on IClient interface
 namespace {ServiceName}.Infra.Clients.FooClient.Models;
 
-internal sealed record FooOrderWireDto(string order_id, string status);
+internal sealed record FooOrderWireDto(
+    [property: JsonPropertyName("order_id")] string OrderId,
+    [property: JsonPropertyName("status")] string Status);
 
 // App.Models domain
-namespace {ServiceName}.App.Models.Foo;
+namespace {ServiceName}.App.Models.Order.Models;
 
-public record FooOrder(string Id, string Status);
+public record FooOrder(
+    string Id,
+    string Status);
 
 // Infra mapping — wire → domain at client boundary
 internal static class FooOrderWireDtoExtensions
 {
     internal static FooOrder ToDomain(this FooOrderWireDto dto) =>
-        new(dto.order_id, dto.status);
+        new(dto.OrderId, dto.Status);
 }
 
 // App/Clients/Interfaces — domain types in contract

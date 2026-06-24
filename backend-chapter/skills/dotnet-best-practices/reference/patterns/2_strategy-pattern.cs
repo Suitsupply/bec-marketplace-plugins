@@ -7,11 +7,7 @@ public interface ITransactionFlowHandler
 }
 
 // Each strategy = one scenario, single responsibility
-public sealed class KlarnaCaptureFlowHandler(
-    IOrderTransactionCreatedMapper mapper,
-    IMaoPublisher publisher,
-    ILogger<KlarnaCaptureFlowHandler> logger)
-    : ITransactionFlowHandler
+public sealed class KlarnaCaptureFlowHandler(IOrderTransactionCreatedMapper mapper, IMaoPublisher publisher, ILogger<KlarnaCaptureFlowHandler> logger) : ITransactionFlowHandler
 {
     public async Task HandleAsync(TransactionContext context, CancellationToken cancellationToken)
     {
@@ -23,11 +19,7 @@ public sealed class KlarnaCaptureFlowHandler(
     }
 }
 
-public sealed class RefundFlowHandler(
-    IOrderHistoryService orderHistoryService,
-    ITransactionToUpdatePaymentTransactionMapper mapper,
-    IMaoPublisher publisher)
-    : ITransactionFlowHandler
+public sealed class RefundFlowHandler(IOrderHistoryService orderHistoryService, ITransactionToUpdatePaymentTransactionMapper mapper, IMaoPublisher publisher) : ITransactionFlowHandler
 {
     public async Task HandleAsync(TransactionContext context, CancellationToken cancellationToken)
     {
@@ -56,10 +48,3 @@ public sealed class OrderTransactionProcessorService(ITransactionFlowHandlerFact
 // services.AddTransient<ITransactionFlowHandlerFactory, TransactionFlowHandlerFactory>();
 // services.AddTransient<KlarnaCaptureFlowHandler>();
 // services.AddTransient<RefundFlowHandler>();
-
-interface ITransactionFlowHandlerFactory { ITransactionFlowHandler Resolve(TransactionContext context); }
-interface IOrderTransactionCreatedMapper { object? Map(TransactionContext context); }
-interface ITransactionToUpdatePaymentTransactionMapper { object? Map(TransactionContext context, object history); }
-interface IOrderHistoryService { Task<object> GetAsync(string orderId, CancellationToken ct); }
-interface IMaoPublisher { Task PublishAsync(object payload, CancellationToken ct); }
-interface ILogger<T> { void LogInformation(string message, params object[] args); }
