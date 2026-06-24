@@ -14,7 +14,7 @@ Team marketplace repository for Cursor IDE plugins. Import this repository as a 
 
 | Plugin | Description |
 |--------|-------------|
-| [continuous-documentation](./continuous-documentation/) | Keeps README in sync with git + transcripts; the stop hook triggers the **readme-updater** agent when cadence thresholds pass; **continuous-documentation** skill holds doc rules. |
+| [continuous-documentation](./continuous-documentation/) | Keeps README in sync as commits land; a stop hook detects when `HEAD` moves and triggers the **continuous-documentation** agent to document the new range plus the conversational "why"; **documentation-standards** skill holds doc rules. |
 | [email-agent-learning](./email-agent-learning/) | Mines agent transcripts every 10 turns to build a local **EMAIL-AGENT.md** knowledge file covering email infrastructure, projects, tools, workflows, and decisions. All learnings stay workspace-local and are never committed. |
 | [backend-chapter](./backend-chapter/) | Backend Chapter plugin: .NET skill suite, Jira workflows, MCP servers (Cursor). Skills work on Cursor and Claude Code. |
 

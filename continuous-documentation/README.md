@@ -1,6 +1,6 @@
 # Continuous Documentation
 
-Cursor plugin that keeps the repository `README.md` current by mining conversation transcripts for documentation-worthy changes, capturing intent and reasoning behind decisions.
+Cursor and Claude Code plugin that keeps the repository `README.md` current. When new commits land, it documents them — pairing the diff (the "what") with the reasoning from the live conversation (the "why").
 
 ## How it works
 
@@ -8,68 +8,51 @@ Three pieces work together:
 
 | Piece | Role |
 |--------|------|
-| **`readme-updater` agent** | Subagent that runs the full workflow: git + transcripts + incremental index → update `README.md`. |
-| **`continuous-documentation` skill** | README structure, inclusion/exclusion, slop filter, and intent guidance. Read by the agent at runtime — not loaded into the main agent's context. |
-| **`stop` hook** | Tracks conversation cadence; when thresholds pass, tells the main agent to launch the `readme-updater` subagent. |
+| **stop hook** | Runs at the end of each agent turn. Compares `HEAD` to the last commit that touched a README; if they differ, it tells the main agent to sync the docs for the new range. |
+| **`continuous-documentation` agent** | Subagent that updates `README.md` from the commit range plus a "why" summary passed to it. |
+| **`documentation-standards` skill** | README structure, inclusion/exclusion, slop filter, and intent guidance. Read by the agent at runtime — not loaded into the main agent's context. |
 
-All heavy processing (reading git history, scanning transcripts, updating the README) happens inside a **subagent**. This keeps the main conversation context window clean.
+The flow when `HEAD` has moved:
 
-Two sources of truth feed the sync:
+1. At turn end the hook compares `git rev-parse HEAD` to the last commit that touched any `README.md` (`git log -1 --format=%H -- ':(glob)**/README.md' 'README.md'`) — the derived baseline.
+2. If they differ (and no README edits are already pending in the working tree), the **main agent** distills a short "why" summary from the live conversation — the design decisions and constraints behind the change.
+3. It launches the `continuous-documentation` subagent in the background, passing that summary. The subagent reads `git diff <base>..HEAD` for the "what", applies the skill, and updates the appropriate `README.md`.
+4. When the user commits the updated README, that commit becomes the new baseline — so the same commits are never documented twice.
 
-- **Git history** — what changed (`git log`, `git diff` since the last indexed commit).
-- **Conversation transcripts** — why it changed (reasoning, alternatives, constraints).
-
-Processing is incremental — only new commits and changed transcripts are evaluated on each run.
+The "why" comes from the conversation in context, not from scraping transcript files off disk. That removes the only host-specific dependency and makes the plugin work identically under Cursor, Claude Code, and cloud agents.
 
 ## Design Choices
 
-**Hook owns cadence, agent owns workflow, skill owns content rules.** The stop hook is deliberately minimal — it only decides *when* to fire and emits a one-line followup message. It has no knowledge of git commands, transcript scanning, or README structure. The agent definition contains the full workflow. The skill contains only content rules (structure, slop filter, inclusion bar). This avoids duplicating logic across layers and keeps each piece independently testable.
+**Detect "HEAD moved", not "the command was `git commit`".** Commits are created by more than `git commit` — `merge`, `pull`, `rebase`, `cherry-pick`, `revert`, and aliases all produce commits, so matching a command string is brittle. Comparing `HEAD` to the derived baseline is agnostic to *how* the commit was made. The check runs at the end of each agent turn (`stop`/`Stop`), so it is not a real-time commit event: a commit made outside the agent (e.g. the editor's Source Control UI or an external terminal) is only picked up on the next agent turn, and not at all if the agent is never used again. When it does run after several new commits, it documents the range `base..HEAD` in one pass. History rewrites (`amend`, `rebase`, `reset`) can leave the baseline off the current history; the range is then imperfect and the worst case is a no-op sync, not a crash.
 
-**Incremental index tracks `lastComparedOriginSha`, not local HEAD.** Local commits can be amended, rebased, or reset — making a stored SHA unreachable. Origin refs are stable. The agent compares `lastComparedOriginSha..origin/HEAD` for remote changes and `git diff HEAD` for local work separately. Before updating the stored SHA, `git merge-base --is-ancestor` verifies the new value is ahead of the current one — preventing regression when a developer's local origin is stale relative to another developer's run.
+**Deliver through the `stop` hook, not `postToolUse`.** Cursor's `postToolUse` `additional_context` is accepted and logged by the hook runner but [not surfaced to the model](https://forum.cursor.com/t/native-posttooluse-hooks-accept-and-log-additional-context-successfully-but-the-injected-context-is-not-surfaced-to-the-model/155689) — a hook there would be a silent no-op. The `stop` hook's `followup_message` (Cursor) and the `Stop` hook's `decision: "block"` (Claude) are the channels that actually reach the model, so detection runs at turn boundaries instead.
 
-**First run reads full source code instead of git history.** Walking the entire commit history on a mature repo produces noise without context. On first run (no index), the agent reads the local source code to understand the project as-is, generates the README from that, and seeds the index with `origin/HEAD` as the baseline for future incremental diffs.
+**The baseline is statless and derived from git.** The "last documented commit" is computed on the fly as the most recent commit that touched any `README.md` (`git log -1 --format=%H -- '**/README.md'`), so it lives in shared git history rather than a workspace-local file. Every clone derives the same baseline, which means teammates never re-document what someone else already wrote up, and there is no marker file to drift, gitignore, or seed.
 
-**Transcripts are re-processed by mtime, not excluded.** Rather than skipping the active conversation's transcript (which risks permanently missing it if the hook never fires again from a different conversation), the agent processes all transcripts including in-progress ones. The incremental index records each transcript's mtime. If a conversation continues after processing, the transcript's mtime advances and it will be re-evaluated on the next run.
+Two behaviors follow directly from defining the baseline as "the last commit that touched a README":
 
-**Subagent runs in the background.** The followup message instructs the main agent to launch the readme-updater with `run_in_background: true`. This keeps the user's conversation unblocked — they can continue chatting while the documentation sync runs.
+- **A commit that touches a README *is* the new baseline.** When such a commit is `HEAD`, `base == HEAD`, so the hook stays silent. Committing the doc update converges the loop, and a commit that only changes a README — or one that bundles a README edit with code — never triggers a sync of itself. A commit that warrants *no* README change does not advance the baseline, so the hook will re-offer a sync on later commits until either docs or new work are committe
+- **An uncommitted README edit counts as a pass already pending.** While the sync's edits sit in the working tree (not yet committed), the hook suppresses re-prompting until you commit them, so it does not nag every turn during the window between editing and committing the docs.
+- **Agent-Friendly** The hook has been optimized for agentic coding. It only fires on an agent-triggered commit. If the readme has been incorrectly or incompletely updated it still counts as an update. Humans are more likely to do this. Agents can be expected to update the readme in full, but may overlook to do as such.
+- **First Init** If there is no readme at all in the repo, it will be treated as a first init and a readme will be generated according to the documentation standards.
 
-**README updates target the appropriate level.** Projects may contain multiple READMEs. The agent identifies all READMEs and maps changes to the correct one.
+**Heavy work runs in a background subagent.** The main agent only writes a short summary; the subagent does the git reading and README editing with `run_in_background: true`, keeping the user's conversation unblocked and the main context window clean.
+
+**The sync never commits.** Editing the README does not move `HEAD`, so it does not re-trigger. Committing the README is left to the user, which keeps the loop from feeding itself.
+
+**First run is detected by the absence of a committed README.** When no commit has ever touched a `README.md`, the subagent reads the full source tree and generates documentation from scratch. On a repo that already has a committed README, the baseline is simply the last commit that touched it — so the first sync only covers commits made since the docs were last updated, not all of history.
+
+**README updates target the appropriate level.** Projects may contain multiple READMEs. The agent maps the committed changes to the correct one (root or project level).
 
 ## Prerequisites
 
 The hook script runs with [Bun](https://bun.sh/). Ensure `bun` is available on `PATH`.
 
-## State files
+## State
 
-| File | Purpose |
-|------|---------|
-| `.cursor/hooks/state/continuous-documentation.json` | Cadence state (turn count, last run time, transcript mtime) |
-| `.cursor/hooks/state/continuous-documentation-index.json` | Incremental index (last compared origin SHA, processed transcript mtimes) |
+None. The baseline is derived from git history (`git log -1 --format=%H -- ':(glob)**/README.md' 'README.md'`), so there is no marker file to store, gitignore, or keep in sync.
 
-Both are workspace-local state files.
-
-## Trigger cadence
-
-| Setting | Default | Trial mode |
-|---------|---------|------------|
-| Minimum turns | 10 | 6 |
-| Minimum minutes | 240 | 30 |
-| Trial duration | — | 24 hours |
-
-All conditions must be met simultaneously. Transcript mtime must also advance since the previous run.
-
-## Configuration
-
-All settings are optional environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `CONTINUOUS_DOCUMENTATION_MIN_TURNS` | Minimum completed turns before triggering | 10 |
-| `CONTINUOUS_DOCUMENTATION_MIN_MINUTES` | Minimum minutes between runs | 240 |
-| `CONTINUOUS_DOCUMENTATION_TRIAL_MODE` | Enable reduced thresholds for a trial window | false |
-| `CONTINUOUS_DOCUMENTATION_TRIAL_MIN_TURNS` | Minimum turns in trial mode | 6 |
-| `CONTINUOUS_DOCUMENTATION_TRIAL_MIN_MINUTES` | Minimum minutes in trial mode | 30 |
-| `CONTINUOUS_DOCUMENTATION_TRIAL_DURATION_MINUTES` | Trial window length in minutes | 1440 |
+> Upgrading from an earlier version? The old `.continuous-documentation/` folder and its `.gitignore` entry are no longer used and can be deleted.
 
 ## License
 
