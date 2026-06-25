@@ -28,6 +28,13 @@
       "description": "General-purpose plugin for the Suitsupply Backend Chapter.",
       "version": "1.1.0",
       "keywords": ["backend-chapter"]
+    },
+    {
+      "name": "out-of-process-tests",
+      "source": "https://github.com/Suitsupply/bec-template-tests-outofprocess",
+      "description": "Scaffold Suitsupply out-of-process tests (contract, e2e, data-validation) into a repo.",
+      "version": "0.1.0",
+      "keywords": ["backend-chapter", "testing"]
     }
   ]
 }

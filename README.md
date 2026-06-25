@@ -17,6 +17,7 @@ Team marketplace repository for Cursor IDE plugins. Import this repository as a 
 | [continuous-documentation](./continuous-documentation/) | Keeps README in sync as commits land; a stop hook detects when `HEAD` moves and triggers the **continuous-documentation** agent to document the new range plus the conversational "why"; **documentation-standards** skill holds doc rules. |
 | [email-agent-learning](./email-agent-learning/) | Mines agent transcripts every 10 turns to build a local **EMAIL-AGENT.md** knowledge file covering email infrastructure, projects, tools, workflows, and decisions. All learnings stay workspace-local and are never committed. |
 | [backend-chapter](./backend-chapter/) | General-purpose plugin for the Suitsupply Backend Chapter; bundles the Azure DevOps and Azure (read-only) MCP servers plus the **/migrate-ado-repo-to-github** command. |
+| [out-of-process-tests](https://github.com/Suitsupply/bec-template-tests-outofprocess) | External-repo plugin. Ships the **create-out-of-process-tests** skill that scaffolds contract / e2e / data-validation tests into a repo by copying the template's sample and wiring the shared daily pipeline. |
 
 ## Adding a new plugin
 
