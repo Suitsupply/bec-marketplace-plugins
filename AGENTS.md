@@ -81,3 +81,29 @@ a patch on top becomes `2.1.1`, not `1.x.x`.
 3. Update the version in all three locations (§1).
 4. Update the table above.
 5. Validate every touched JSON file parses.
+
+## Cursor Cloud specific instructions
+
+This repo is a plugin marketplace (JSON manifests + Markdown skills/agents/commands).
+There is **no application server** and **no `package.json`/lockfile** — the only
+executable code is the two TypeScript stop-hook scripts, which run under **`bun`**.
+
+- `bun` is the runtime for the hooks. The startup update script installs it to
+  `~/.bun/bin`. If `bun` is not on your `PATH` in a fresh shell, add it:
+  `export PATH="$HOME/.bun/bin:$PATH"`.
+- There is no dependency install step (no `package.json`); do **not** run `bun install`.
+- "Lint/test" here = (a) confirm every JSON file parses, and (b) type/build-check the
+  hooks:
+  - JSON: `find . -name '*.json' -not -path './.git/*' -print0 | xargs -0 -n1 jq empty`
+  - Hooks build: `bun build continuous-documentation/hooks/continuous-documentation-trigger.ts --target=bun >/dev/null`
+    (and the same for `email-agent-learning/hooks/email-agent-learning-stop.ts`).
+- Run a hook end-to-end (it reads a JSON event on stdin and prints a JSON result):
+  `echo '{"status":"completed"}' | bun run continuous-documentation/hooks/continuous-documentation-trigger.ts cursor`
+- `continuous-documentation` only emits a `followup_message`/`block` when `HEAD` has
+  moved **past** the last commit that touched any `README.md`. In a repo whose README
+  is already current it correctly returns `{}` — to see the active path, test in a temp
+  git repo where the latest commit does not touch a README.
+- `email-agent-learning` thresholds are tunable via env vars
+  `EMAIL_AGENT_LEARNING_MIN_TURNS` (default 10) and `EMAIL_AGENT_LEARNING_MIN_MINUTES`
+  (default 1); it also needs a `transcript_path` whose mtime has advanced to trigger.
+  It writes workspace-local state under `.cursor/hooks/state/` (gitignored).
