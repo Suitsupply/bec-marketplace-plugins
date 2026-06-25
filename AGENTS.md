@@ -73,6 +73,12 @@ a patch on top becomes `2.1.1`, not `1.x.x`.
 | backend-chapter | 1.1.0 |
 | continuous-documentation | 2.1.1 |
 | email-agent-learning | 1.0.1 |
+| out-of-process-tests | 0.1.0 |
+
+> `out-of-process-tests` is an **external-repo** plugin: its manifests and skill live in
+> [`bec-template-tests-outofprocess`](https://github.com/Suitsupply/bec-template-tests-outofprocess), so its version
+> source-of-truth is that repo (Claude refs it via a `github` source; Cursor via a remote-URL `source`). Only the
+> Cursor `marketplace.json` entry carries a mirrored `version` here — keep it in step with the external repo.
 
 ## Checklist when changing a plugin
 

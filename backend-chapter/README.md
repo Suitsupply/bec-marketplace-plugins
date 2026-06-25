@@ -24,7 +24,7 @@ Both servers run via `npx` on demand, so no global install is required.
 
 ### Skills
 
-Loaded by the agent when explicitly invoked by name (all skills below set `disable-model-invocation: true` — no ambient auto-invocation).
+Loaded by the agent when explicitly invoked by name.
 
 | Skill | Description |
 |-------|-------------|

@@ -19,6 +19,14 @@
       "name": "continuous-documentation",
       "source": "./continuous-documentation",
       "description": "Keeps the repository README.md current by documenting each commit — diff plus conversational reasoning."
+    },
+    {
+      "name": "out-of-process-tests",
+      "source": {
+        "source": "github",
+        "repo": "Suitsupply/bec-template-tests-outofprocess"
+      },
+      "description": "Scaffold Suitsupply out-of-process tests (contract, e2e, data-validation) into a repo."
     }
   ]
 }
