@@ -10,6 +10,8 @@ description: >-
 
 Integration tests execute against a **live, deployed** host — no mocking. See **write-tests** for the testing pyramid and CI stages.
 
+**Coverage by environment:** **TST** — `@smoke` plus at least one `@integration` feature per functional flow/feature; **PRD** — `@smoke` only (never `@integration`).
+
 ## Examples
 
 | # | File | Topic |
@@ -39,6 +41,8 @@ All integration tests live in `test/{ServiceName}.IntegrationTests/`.
 ---
 
 ## Project structure
+
+**Not a mirror of `src/`** — same Reqnroll feature/flow layout as component tests, plus per-environment runsettings. See **write-tests** hub for layout comparison across tiers.
 
 ```
 test/{ServiceName}.IntegrationTests/
@@ -93,7 +97,7 @@ Every feature must be tagged with exactly one of:
 | Tag | Meaning | Environments |
 |---|---|---|
 | `@smoke` | No function key, no blob polling. Verifies basic connectivity and auth enforcement. | TST, ACC, PRD |
-| `@integration` | Requires `FUNCTIONS_CODE` and `BLOB_CONNECTION_STRING`. Posts a real webhook and asserts blob output. | TST, ACC only — **never PRD** |
+| `@integration` | Requires whatever secrets/settings your scenarios need (e.g. function key, storage connection string). Posts real requests and asserts live side effects. | TST, ACC only — **never PRD** |
 
 Place the tag on the `Feature:` line:
 
@@ -117,33 +121,39 @@ Three runsettings files control which tests run and which host URL is used:
 
 | File | Environments tested | Secrets needed |
 |---|---|---|
-| `integrationtests.tst.runsettings` | TST | `FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING` (from CI) |
-| `integrationtests.acc.runsettings` | ACC | `FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING` (from CI) |
+| `integrationtests.tst.runsettings` | TST | Whatever your `@integration` features require — via CI env vars (see below) |
+| `integrationtests.acc.runsettings` | ACC | Same as TST |
 | `integrationtests.prd.runsettings` | PRD | None (`@smoke` only) |
 
-`FUNCTIONS_HOST_URL` is hardcoded in the runsettings (non-secret). All secrets come **exclusively** from the CI pipeline `env:` block (variable groups). Never hardcode secrets in runsettings.
+The **host URL** (e.g. `FUNCTIONS_HOST_URL`) can be hardcoded in runsettings — it is not a secret. **Secrets** are never hardcoded in runsettings; the pipeline injects them as environment variables (variable groups).
+
+**Example** (shopifyintegration): `FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING`. Your service defines its own keys in `IntegrationTestSettings` to match what `@integration` scenarios actually use.
 
 Adding a new environment:
 1. Create `integrationtests.<env>.runsettings` following the existing template
 2. Set `TestCaseFilter` to `Category=smoke|Category=integration` (or `Category=smoke` for production-like envs)
-3. Hardcode `FUNCTIONS_HOST_URL` for that environment
+3. Hardcode the host URL env var for that environment (e.g. `FUNCTIONS_HOST_URL`)
 
 ---
 
 ## Step 3: Settings resolution
 
-`IntegrationTestSettings.Load()` resolves three required values in priority order:
+`IntegrationTestSettings.Load()` resolves required values in priority order:
 
 1. **Environment variable** — set by CI pipeline via variable group
 2. **`integrationtests.local.json`** — gitignored file next to the `.csproj` for local development
 
+Define one property per secret or config value your `@integration` features need. **Names are service-specific** — the example below is from shopifyintegration, not a chapter-wide standard:
+
 ```json
 {
   "FUNCTIONS_HOST_URL": "https://{service-slug}-tst-af.azurewebsites.net",
-  "FUNCTIONS_CODE":     "<your-function-key>",
-  "BLOB_CONNECTION_STRING": "<your-storage-connection-string>"
+  "FUNCTIONS_CODE": "<function-key>",
+  "BLOB_CONNECTION_STRING": "<storage-connection-string>"
 }
 ```
+
+Another service might use `API_KEY`, `STORAGE_CONNECTION_STRING`, or additional keys — add them to the record and to the pipeline variable group.
 
 **Never commit** `integrationtests.local.json` — it is gitignored.
 
@@ -170,8 +180,8 @@ Feature: Endpoint Authentication
       | POST   | /api/orders/created               | 401  |
 ```
 
-- No `FUNCTIONS_CODE` appended — smoke tests deliberately omit the key to verify 401 responses
-- Uses `HttpClient` without auth headers; base URL comes from `FUNCTIONS_HOST_URL` only
+- No function key appended — smoke tests deliberately omit auth to verify 401 (or equivalent) responses
+- Uses `HttpClient` without auth headers; base URL comes from the host URL setting (e.g. `FUNCTIONS_HOST_URL`) only
 
 ### @integration features - file-driven, blob assertion
 
@@ -206,10 +216,9 @@ Feature: Order Created Processor (File-Driven)
 ```
 
 Key points:
-- `WebhookPayload.json` is minimal - the deployed app fetches full order/transaction details from the external API
-- The step appends `?code=<FUNCTIONS_CODE>` to the route automatically
-- The `Then` step polls blob storage for up to **120 seconds**, finding the blob by tag query (`orderId` + `maoEventType`)
-- `maoEventType` tag values: `"Create"` (OrderCreated), `"UpdateOrderNote"` (OrderUpdated), `"SavePaymentHeader"` / `"UpdatePaymentTransaction"` (OrderTransactionCreated)
+- `WebhookPayload.json` is minimal — the deployed app fetches full details from external APIs where applicable
+- The `When` step appends auth to the route as your service requires (e.g. `?code={Settings.FunctionsCode}` when using Azure Functions keys)
+- The `Then` step polls for side effects (e.g. blob backup) using connection settings from `IntegrationTestSettings`
 
 ### @integration query endpoints
 
@@ -313,7 +322,7 @@ Conventions:
 | `BeforeScenario` | All | Scenario | Resolves base URL; creates `HttpClient { BaseAddress }` |
 | `AfterScenario` | All | Scenario | Disposes `HttpClient` |
 
-`@smoke` scenarios do not trigger `BeforeFeature("integration")` — they use `FUNCTIONS_HOST_URL` directly from the environment variable.
+`@smoke` scenarios do not trigger `BeforeFeature("integration")` — they use the host URL from runsettings or environment (e.g. `FUNCTIONS_HOST_URL`).
 
 ---
 
@@ -342,12 +351,12 @@ Identical behaviour to the component test comparer (same implementation, differe
 
 ## Step 10: CI integration
 
-Integration tests run automatically after TST deployment via `devops/azurepipelines/azure-pipeline.yaml`:
+Integration tests run automatically after deployment (e.g. `devops/azurepipelines/azure-pipeline.yaml`):
 
-- **TST deploy stage** - runs `@smoke` + `@integration` with secrets from variable group `write-tests-tst`
-- **PRD deploy stage** - runs `@smoke` only (`integrationtests.prd.runsettings`)
+- **TST deploy stage** — runs `@smoke` + `@integration`; pipeline injects secrets as env vars (variable group per environment)
+- **PRD deploy stage** — runs `@smoke` only (`integrationtests.prd.runsettings`)
 
-Secrets (`FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING`) are injected as pipeline environment variables, never committed.
+Map each `IntegrationTestSettings` property to a pipeline variable — never commit secret values. Example variable names from shopifyintegration: `FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING`.
 
 ---
 
@@ -385,7 +394,7 @@ public void GivenRefundScenarioIsLoaded(string folderName) { ... }
 public async Task WhenRefundWebhookIsSent()
 {
     var payload = scenarioContext.Get<JsonNode>("WebhookPayload");
-    var url = $"/api/refunds/created?code={Settings.FunctionsCode}";
+    var url = $"/api/refunds/created?code={Settings.FunctionsCode}"; // adapt auth query param to your host
     var response = await HttpClient.PostAsync(url, new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json"));
     Assert.That((int)response.StatusCode, Is.EqualTo(202));
 }
@@ -404,9 +413,9 @@ public async Task ThenRefundBlobMatchesFixture() { ... }
 - [ ] `WebhookPayload.json` is minimal (no full order/transaction data)
 - [ ] Expected fixture verified against a real test run
 - [ ] Non-deterministic fields (generated GUIDs, timestamps) added to `IgnoredJsonProperties`
-- [ ] `?code={Settings.FunctionsCode}` appended to all webhook POST routes
-- [ ] `testStartedAt` captured immediately before the webhook call (not before scenario setup)
-- [ ] Blob polling uses the correct `maoEventType` for the processor under test
+- [ ] Auth on webhook/query routes uses settings from `IntegrationTestSettings` (not hardcoded)
+- [ ] `testStartedAt` captured immediately before the triggering HTTP call (not before scenario setup)
+- [ ] Side-effect polling (blob, etc.) uses the correct tags/keys for the flow under test
 - [ ] Scenario outline titles and descriptions use `-`, not en-dashes
-- [ ] Secrets (`FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING`) never hardcoded - env vars or `integrationtests.local.json` only
+- [ ] Secrets never hardcoded — env vars (CI) or `integrationtests.local.json` (local) only; names are service-specific (e.g. shopifyintegration uses `FUNCTIONS_CODE`, `BLOB_CONNECTION_STRING`)
 - [ ] Step definitions class is `public sealed` with `[Binding]` and primary constructor

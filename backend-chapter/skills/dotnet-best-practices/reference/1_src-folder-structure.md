@@ -255,8 +255,8 @@ All test projects use the chapter `.csproj` templates (`IsPackable` false; cover
 test/{ServiceName}.UnitTests/
 ├── AssemblyInfo.cs                   # InstancePerTestCase
 ├── Helpers/
-│   ├── FixtureFactory.cs
-│   ├── FixtureExtensions.cs
+│   ├── FixtureFactory.cs             # registers ICustomization / specimen builders
+│   ├── Customizations/               # e.g. PresentmentMoneyCustomization.cs
 │   └── ArgumentsNullChecker.cs
 ├── Api/                              # mirrors src/{ServiceName}.Api/
 │   ├── Functions/

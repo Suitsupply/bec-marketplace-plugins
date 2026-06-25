@@ -8,7 +8,7 @@ description: >-
 
 # Write Component Tests
 
-Component tests verify an Azure Function end-to-end in-process, with all infrastructure dependencies replaced by `Mock<>` objects. See **write-tests** for the testing pyramid.
+Component tests verify an Azure Function end-to-end in-process, with all infrastructure dependencies replaced by `Mock<>` objects — including blob storage, Service Bus, **downstream HTTP clients** (`I*Client` from `App/Clients/Interfaces/`), and outbound publishers. **Use real Api/Infra mappers** (same as unit tests) — only external I/O is mocked. See **write-tests** for the testing pyramid.
 
 ## Examples
 
@@ -16,13 +16,13 @@ Component tests verify an Azure Function end-to-end in-process, with all infrast
 |---|------|-------|
 | 1 | [1_feature-file.feature](examples/1_feature-file.feature) | Gherkin feature file template |
 | 2 | [2_step-definitions.cs](examples/2_step-definitions.cs) | Step definitions binding |
-| 3 | [3_application-factory-snippet.cs](examples/3_application-factory-snippet.cs) | `ApplicationFactory` setup |
+| 3 | [3_application-factory-snippet.cs](examples/3_application-factory-snippet.cs) | `ApplicationFactory`, `Hooks`, `ScenarioContextKeys` |
 
 ---
 
 ## Purpose
 
-Component tests run with `WebApplicationFactory<Program>` and use Reqnroll (Gherkin) as the test specification language. All infrastructure dependencies (blob storage, Service Bus, sample GraphQL API, outbound publishers, etc.) are replaced by `Mock<>` objects.
+Component tests run with `WebApplicationFactory<Program>` and use Reqnroll (Gherkin) as the test specification language. All infrastructure dependencies — blob storage, Service Bus, **downstream HTTP clients**, external APIs, outbound publishers, etc. — are replaced by `Mock<>` objects in `ApplicationFactory`.
 
 ## Project location
 
@@ -39,59 +39,43 @@ All component tests live in `test/{ServiceName}.ComponentTests/`.
 
 ## Project structure
 
+**Not a mirror of `src/`** — organize by functional flow (feature files, shared step definitions, JSON fixtures). See **write-tests** hub for layout comparison across tiers.
+
 ```
 test/{ServiceName}.ComponentTests/
 ├── Features/
-│   ├── GetOrders/
-│   │   ├── GetOrderFlow.feature
-│   │   └── GetOrderByInternalOrderIdFlow.feature
+│   ├── Queries/                              # optional — GET / query endpoints
+│   │   ├── Get{Resource}Flow.feature
+│   │   └── Get{Resource}By{Key}Flow.feature
 │   └── Webhooks/
 │       ├── Receivers/
-│       │   ├── ReceiverEndpoints.feature              # All HTTP receivers (grouped)
-│       │   └── OutboundEventsBackup-Receiver.feature       # Service Bus backup receiver
+│       │   ├── ReceiverEndpoints.feature              # grouped HTTP receivers
+│       │   └── {BackupReceiver}.feature               # Service Bus backup receiver (if any)
 │       └── Processors/
-│           ├── OrderCreated/
-│           │   ├── OrderCreated.feature               # Programmatic scenarios
-│           │   ├── OrderCreated-Files.feature         # File-driven scenarios
-│           │   └── OrderCreated-ServiceBusFailures.feature
-│           ├── OrderUpdated/
-│           │   ├── OrderUpdated.feature
-│           │   ├── OrderUpdated-Files.feature
-│           │   └── OrderUpdated-ServiceBusFailures.feature
-│           └── OrderTransactionCreated/
-│               ├── OrderTransactionCreated.feature
-│               ├── OrderTransactionCreated-Files.feature
-│               ├── OrderTransactionCreated-UnhappyFlow.feature
-│               └── OrderTransactionCreated-ServiceBusFailures.feature
-├── StepDefinitions/                   # Shared [Binding] classes (not 1:1 with feature files)
+│           └── {FlowName}/                            # e.g. FooCreated, BarUpdated
+│               ├── {FlowName}.feature                 # programmatic scenarios
+│               ├── {FlowName}-Files.feature           # file-driven scenarios
+│               ├── {FlowName}-ServiceBusFailures.feature
+│               └── {FlowName}-UnhappyFlow.feature     # optional
+├── StepDefinitions/                   # shared [Binding] classes (not 1:1 with feature files)
 │   ├── ReceiverEndpointsStepDefinitions.cs
-│   ├── OutboundEventsBackupReceiverFlowStepDefinitions.cs
-│   ├── OrderProcessorFlowStepDefinitions.cs           # Order created processor steps
-│   ├── OrderProcessorFlowFilesStepDefinitions.cs
-│   ├── OrderUpdatedProcessorFlowStepDefinitions.cs
-│   ├── OrderTransactionCreatedProcessorFlowStepDefinitions.cs
+│   ├── {FlowName}ProcessorFlowStepDefinitions.cs
+│   ├── {FlowName}ProcessorFlowFilesStepDefinitions.cs
 │   └── ...
 ├── Support/
 │   ├── ApplicationFactory.cs          # WebApplicationFactory with all mocks
 │   ├── Hooks.cs                       # BeforeFeature/BeforeScenario lifecycle
-│   ├── ScenarioContextKeys.cs         # Constant keys for ScenarioContext/FeatureContext
-│   ├── TestDataBuilder.cs         # sample Order model factory helpers
-│   └── JsonFixtureComparer.cs          # JSON fixture deep-equality comparer
-└── Scenarios/                         # JSON fixture files for file-driven tests
-    ├── OrderCreated/
-    │   └── <ScenarioName>/
-    │       ├── SourceOrder.json
-    │       └── ExpectedOutboundCreatedEvent.json
-    ├── OrderUpdated/
-    │   └── <ScenarioName>/
-    │       ├── SourceOrder.json
-    │       └── ExpectedOutboundUpdatedEvent.json
-    └── OrderTransactionCreated/
+│   ├── ScenarioContextKeys.cs         # constant keys for ScenarioContext/FeatureContext
+│   ├── TestDataBuilder.cs             # optional — in-memory domain model factories
+│   └── JsonFixtureComparer.cs         # JSON fixture deep-equality comparer
+└── Scenarios/                         # JSON fixtures for file-driven tests
+    └── {FlowName}/
         └── <ScenarioName>/
-            ├── webhook.json
-            ├── graphql.json
-            └── expected-mao-payment.json   # (and other optional fixture files)
+            ├── SourceInput.json         # upstream / enrichment input shape
+            └── ExpectedOutbound.json    # expected publish / wire DTO
 ```
+
+Add folders only for flows that exist in the service — not every processor needs every suffix (`-Files`, `-ServiceBusFailures`, `-UnhappyFlow`).
 
 ---
 
@@ -101,15 +85,15 @@ Feature files live under `Features/` grouped by concern. The **file name** and *
 
 | Function type | Path | Feature file(s) | `Feature:` title |
 |---|---|---|---|
-| HTTP Receivers (grouped) | `Webhooks/Receivers/` | `ReceiverEndpoints.feature` | `Receiver Endpoints` |
-| Service Bus Receiver | `Webhooks/Receivers/` | `OutboundEventsBackup-Receiver.feature` | `Outbound Events Backup Receiver` |
-| Processor (programmatic) | `Webhooks/Processors/{Name}/` | `{Name}.feature` | `{Name} Processor` |
-| Processor (file-driven) | `Webhooks/Processors/{Name}/` | `{Name}-Files.feature` | `{Name} Processor (File-Driven)` |
-| Processor (Service Bus failures) | `Webhooks/Processors/{Name}/` | `{Name}-ServiceBusFailures.feature` | `{Name} Processor Service Bus Failures` |
-| Processor (unhappy path) | `Webhooks/Processors/{Name}/` | `{Name}-UnhappyFlow.feature` | `{Name} Processor Unhappy Flow` |
-| Query endpoints | `GetOrders/` | `GetOrderFlow.feature` | `Get Order Flow` |
+| HTTP receivers (grouped) | `Webhooks/Receivers/` | `ReceiverEndpoints.feature` | `Receiver Endpoints` |
+| Service Bus receiver | `Webhooks/Receivers/` | `{Name}-Receiver.feature` | `{Name} Receiver` |
+| Processor (programmatic) | `Webhooks/Processors/{FlowName}/` | `{FlowName}.feature` | `{FlowName} Processor` |
+| Processor (file-driven) | `Webhooks/Processors/{FlowName}/` | `{FlowName}-Files.feature` | `{FlowName} Processor (File-Driven)` |
+| Processor (Service Bus failures) | `Webhooks/Processors/{FlowName}/` | `{FlowName}-ServiceBusFailures.feature` | `{FlowName} Processor Service Bus Failures` |
+| Processor (unhappy path) | `Webhooks/Processors/{FlowName}/` | `{FlowName}-UnhappyFlow.feature` | `{FlowName} Processor Unhappy Flow` |
+| Query endpoints | `Queries/` | `Get{Resource}Flow.feature` | `Get {Resource} Flow` |
 
-**Examples:** `OrderCreated.feature` → `Feature: Order Created Processor`; `OrderTransactionCreated-Files.feature` → `Feature: Order Transaction Created Processor (File-Driven)`.
+**Examples:** `FooCreated.feature` → `Feature: Foo Created Processor`; `FooCreated-Files.feature` → `Feature: Foo Created Processor (File-Driven)`.
 
 **Grouping rule**: HTTP receivers that share identical behaviour (accept POST → blob → Service Bus → 202) are covered together in `ReceiverEndpoints.feature` using a `Scenario Outline`.
 
@@ -121,21 +105,23 @@ Feature files live under `Features/` grouped by concern. The **file name** and *
 
 ### Processor `When` step wording
 
-Use the full processor name in steps so scenarios read unambiguously:
+Use the full processor / flow name in steps so scenarios read unambiguously:
 
-| Processor | Programmatic | File-driven | Service Bus |
-|---|---|---|---|
-| Order created | `the order created processor receives order {id}` | `the order created processor processes the file-driven scenario order` | `the order created processor receives order {id} at Service Bus delivery count {n}` |
-| Order updated | `the order updated processor receives order {id}` | `the order updated processor processes the file-driven scenario order` | `the order updated processor receives order {id} at Service Bus delivery count {n}` |
-| Order transaction created | `the order transaction created processor receives transaction {txId} for order {orderId}` | `the order transaction created processor processes the file-driven scenario` | `the order transaction created processor receives transaction {txId} for order {orderId} at Service Bus delivery count {n}` |
+| Style | Example step |
+|---|---|
+| Programmatic | `the foo created processor receives resource {id}` |
+| File-driven | `the foo created processor processes the file-driven scenario` |
+| Service Bus failure | `the foo created processor receives resource {id} at Service Bus delivery count {n}` |
+
+Match the domain vocabulary of the service (`order`, `shipment`, `transaction`, etc.) — keep wording consistent within a flow.
 
 ---
 
 ## Step 2: Feature file structure
 
-### HTTP Receiver features
+### HTTP receiver features
 
-HTTP receivers share identical behaviour and are tested together in `Features/Webhooks/Receivers/ReceiverEndpoints.feature` (not one feature file per receiver):
+HTTP receivers with shared behaviour are tested together in `Features/Webhooks/Receivers/ReceiverEndpoints.feature` (not one feature file per receiver):
 
 ```gherkin
 Feature: Receiver Endpoints
@@ -149,130 +135,101 @@ Feature: Receiver Endpoints
     And the service bus client should have received 1 message for event '<eventType>' with the request body and message id '<messageId>'
 
     Examples:
-      | route                            | payload                 | eventType               | messageId | resourceId |
-      | /api/orders/created              | {"id":1,"name":"1001"}  | OrderCreated            | 1         | 1              |
-      | /api/orders/transactions/created | {"id":1,"order_id":100} | OrderTransactionCreated | 1         | 100            |
+      | route                 | payload                | eventType    | messageId | resourceId |
+      | /api/foo/created      | {"id":1,"name":"1001"} | FooCreated   | 1         | 1          |
+      | /api/bar/updated      | {"id":2,"name":"1002"} | BarUpdated   | 2         | 2          |
 ```
 
-**Payload shapes by receiver:**
+Add a row per receiver route. Document which JSON field supplies `resourceId` for each payload shape in a comment or table in the feature file.
 
-| Receiver | Route | Payload | `resourceId` source |
-|---|---|---|---|
-| `OrderCreatedReceiver` | `/api/orders/created` | `{"id":1,"name":"#1001"}` | `id` field |
-| `OrderUpdatedReceiver` | `/api/orders/updated` | `{"id":1,"name":"#1001"}` | `id` field |
-| `OrderTransactionCreatedReceiver` | `/api/orders/transactions/created` | `{"id":1,"order_id":100}` | `order_id` field |
-| `RefundsCreatedReceiver` | `/api/refunds/created` | `{"id":1,"order_id":100}` | `order_id` field |
-
-All four use the same set of reusable steps defined in `ReceiverEndpointsStepDefinitions.cs` — no new step definition file is needed for these.
+All grouped receivers reuse steps from `ReceiverEndpointsStepDefinitions.cs` — no new step definition file is needed unless behaviour diverges.
 
 ### Processor features (programmatic style)
 
-Programmatic processor scenarios build sample order objects in-memory using `TestDataBuilder` and verify the published outbound payload field by field.
+Programmatic scenarios build domain or upstream models in-memory (via `TestDataBuilder` or `Fixture`) and verify the published outbound payload field by field.
 
 ```gherkin
-Feature: Order Created Processor
+Feature: Foo Created Processor
   ...
 
   Background:
     Given the outbound publisher returns message id "pub-sub-test-id"
 
-  Scenario: RTW order is processed, published and backed up
-    Given the sample order 10001 contains a RTW line shipped to US with shipping code "UPS_SAVER"
-    And the Shipment Method API returns "UPS_SAVER" for code "UPS_SAVER"
-    When the order created processor receives order 10001
+  Scenario: Standard resource is processed, published and backed up
+    Given the sample resource 10001 is configured for the happy path
+    And the downstream API returns the expected lookup for code "STANDARD"
+    When the foo created processor receives resource 10001
     Then the outbound publisher is called once
-    And the published outbound order has 1 order line(s)
-    And the first outbound order line has shipping method id "UPS_SAVER"
+    And the published outbound event has the expected field values
     And Service Bus receives a backup message with message id "pub-sub-test-id"
 ```
 
 Key conventions:
 - One `Background` step sets up the publisher mock and captures the published model in a `List<T>`
-- `scenarioContext.Set(captured, ScenarioContextKeys.CapturedOutboundOrders)` in the Background step saves the captured list for `Then` assertions
-- The `When` step posts to the `/api/orders/created/process/debug` (or `updated/process/debug`) debug route
+- `scenarioContext.Set(captured, ScenarioContextKeys.CapturedOutboundEvents)` in the Background step saves the captured list for `Then` assertions
+- The `When` step posts to the processor **debug route** (e.g. `/api/foo/created/process/debug`) when the service exposes one for in-process testing
 - `Then` steps assert Moq `Verify` counts and field values on the captured list
 
 ### Processor features (file-driven style)
 
-File-driven tests compare the full outbound JSON output against a fixture in `Scenarios/{Domain}/{ScenarioName}/`.
+File-driven tests compare the full outbound JSON output against a fixture in `Scenarios/{FlowName}/{ScenarioName}/`.
 
 ```gherkin
-Feature: Order Created Processor (File-Driven)
+Feature: Foo Created Processor (File-Driven)
   ...
 
   Background:
     Given the outbound publisher returns message id "pub-sub-test-id"
 
-  Scenario Outline: <scenarioFolder> - sample order is processed and outbound output matches the fixture
-    Given the order scenario is loaded from folder "<scenarioFolder>"
-    When the order created processor processes the file-driven scenario order
-    Then the published outbound order matches the expected outbound fixture
+  Scenario Outline: <scenarioFolder> - processor output matches the fixture
+    Given the scenario is loaded from folder "<scenarioFolder>"
+    When the foo created processor processes the file-driven scenario
+    Then the published outbound event matches the expected outbound fixture
 
     Examples:
-      | scenarioFolder              |
-      | ShipToStore-ReadyToWearItem |
+      | scenarioFolder   |
+      | HappyPath-Example |
 ```
 
 Adding a new file-driven scenario:
-1. Create a subfolder under `Scenarios/OrderCreated/<ScenarioName>/`
-2. Add `SourceOrder.json` (GraphQL shape: `{ "data": { "order": { ... } } }`)
-3. Add `ExpectedOutboundCreatedEvent.json` (the expected `CreateOrderOutboundModel` as JSON)
+1. Create a subfolder under `Scenarios/{FlowName}/<ScenarioName>/`
+2. Add `SourceInput.json` (upstream API or enrichment input shape)
+3. Add `ExpectedOutbound.json` (expected publish / wire DTO)
 4. Add a row to the `Examples` table in the feature file
 
-**Non-deterministic fields** (e.g. `TaxDetailId` which is `Guid.NewGuid()`) must be added to the `IgnoredJsonProperties` set in the step definitions class.
-
-### Order Transaction Created processor
-
-Programmatic and file-driven scenarios live under `Features/Webhooks/Processors/OrderTransactionCreated/`. Use the full name in steps:
-
-```gherkin
-When the order transaction created processor receives transaction 50001 for order 30001
-```
-
-File-driven scenarios load fixtures from `Scenarios/OrderTransactionCreated/<ScenarioName>/` (see `OrderTransactionCreated-Files.feature` for the full fixture file list). The `When` step is:
-
-```gherkin
-When the order transaction created processor processes the file-driven scenario
-```
-
-Unhappy-path and Service Bus failure scenarios use `{Name}-UnhappyFlow.feature` and `{Name}-ServiceBusFailures.feature` respectively.
+**Non-deterministic fields** (e.g. generated GUIDs, timestamps) must be added to the `IgnoredJsonProperties` set in the file-driven step definitions class.
 
 ### Query endpoint features
 
-GET endpoints live under `Features/GetOrders/`:
+GET endpoints live under `Features/Queries/`:
 
-| Feature file | Endpoints tested |
+| Feature file | Typical pattern |
 |---|---|
-| `GetOrderFlow.feature` | `GET /api/orders/{resourceId}` |
-| `GetOrderByInternalOrderIdFlow.feature` | `GET /api/orders?byInternalOrderId=` |
+| `Get{Resource}Flow.feature` | `GET /api/{resources}/{id}` |
+| `Get{Resource}By{Key}Flow.feature` | `GET /api/{resources}?{key}=` |
 
-Step definitions: `GetOrderFlowStepDefinitions.cs`, `GetOrderByInternalOrderIdFlowStepDefinitions.cs`. Routes are registered in `ApplicationFactory.ConfigureWebHost`.
+Step definitions: `Get{Resource}FlowStepDefinitions.cs`, etc. Routes are registered in `ApplicationFactory.ConfigureWebHost`.
 
 ### Service Bus failure features
 
-`*-ServiceBusFailures.feature` files test processor dead-letter and retry behaviour **without** a real Service Bus. Step definitions invoke the processor's `Run(ServiceBusReceivedMessage, ServiceBusMessageActions, ...)` directly with a mocked `ServiceBusMessageActions` and a synthetic message at a given `DeliveryCount`. See `OrderProcessorsServiceBusFlowStepDefinitions.cs` and `OrderTransactionCreatedProcessorServiceBusFlowStepDefinitions.cs`.
+`*-ServiceBusFailures.feature` files test processor dead-letter and retry behaviour **without** a real Service Bus. Step definitions invoke the processor's `Run(ServiceBusReceivedMessage, ServiceBusMessageActions, ...)` directly with a mocked `ServiceBusMessageActions` and a synthetic message at a given `DeliveryCount`.
 
-Programmatic happy-path scenarios use the `_Debug` HTTP routes instead (e.g. `/api/orders/created/process/debug`).
+Programmatic happy-path scenarios use debug HTTP routes when available (e.g. `/api/foo/created/process/debug`).
 
-### Step definitions inventory
+### Step definitions — naming pattern
 
-All step definition classes are in `StepDefinitions/` and shared across features via `[Binding]`:
+All step definition classes are in `StepDefinitions/` and shared across features via `[Binding]`. Typical files per concern:
 
-| File | Covers |
+| Pattern | Covers |
 |---|---|
-| `ReceiverEndpointsStepDefinitions.cs` | Shared HTTP POST/response steps for receivers |
-| `OutboundEventsBackupReceiverFlowStepDefinitions.cs` | outbound backup receiver Service Bus scenarios |
-| `OrderProcessorFlowStepDefinitions.cs` | Order created processor programmatic steps |
-| `OrderProcessorFlowFilesStepDefinitions.cs` | Order created file-driven steps |
-| `OrderProcessorsServiceBusFlowStepDefinitions.cs` | Order created/updated Service Bus failure steps |
-| `OrderUpdatedProcessorFlowStepDefinitions.cs` | Order updated programmatic steps |
-| `OrderUpdatedProcessorFlowFilesStepDefinitions.cs` | Order updated file-driven steps |
-| `OrderTransactionCreatedProcessorFlowStepDefinitions.cs` | Order transaction created programmatic steps |
-| `OrderTransactionCreatedProcessorFlowFilesStepDefinitions.cs` | Order transaction created file-driven steps |
-| `OrderTransactionCreatedProcessorUnhappyFlowStepDefinitions.cs` | Failed payment / orderCapture error steps |
-| `OrderTransactionCreatedProcessorServiceBusFlowStepDefinitions.cs` | Transaction Service Bus failure steps |
-| `GetOrderFlowStepDefinitions.cs` | GET order by sample ID |
-| `GetOrderByInternalOrderIdFlowStepDefinitions.cs` | GET order by internal outbound name |
+| `ReceiverEndpointsStepDefinitions.cs` | Shared HTTP POST/response steps for grouped receivers |
+| `{FlowName}ProcessorFlowStepDefinitions.cs` | Programmatic processor steps |
+| `{FlowName}ProcessorFlowFilesStepDefinitions.cs` | File-driven processor steps |
+| `{FlowName}ProcessorServiceBusFlowStepDefinitions.cs` | Service Bus failure / dead-letter steps |
+| `{FlowName}ProcessorUnhappyFlowStepDefinitions.cs` | Error / rejection paths (optional) |
+| `Get{Resource}FlowStepDefinitions.cs` | Query endpoint steps |
+
+Reuse existing `[Binding]` steps before adding new classes.
 
 ---
 
@@ -288,7 +245,7 @@ using {ServiceName}.ComponentTests.Support;
 namespace {ServiceName}.ComponentTests.StepDefinitions;
 
 [Binding]
-public sealed class OrderCreatedReceiverFlowStepDefinitions(ScenarioContext scenarioContext, FeatureContext featureContext)
+public sealed class FooCreatedProcessorFlowStepDefinitions(ScenarioContext scenarioContext, FeatureContext featureContext)
 {
     // Access the factory from FeatureContext (set in BeforeFeature hook)
     private ApplicationFactory Factory => featureContext.Get<ApplicationFactory>(ScenarioContextKeys.Factory);
@@ -316,25 +273,31 @@ Conventions:
 
 ## Step 4: ApplicationFactory — adding new mocks
 
-When a new infrastructure client is introduced, add it to `ApplicationFactory.cs`:
+Full template: [3_application-factory-snippet.cs](examples/3_application-factory-snippet.cs) (`ApplicationFactory`, `Hooks`, `ScenarioContextKeys`).
+
+The factory extends `WebApplicationFactory<Program>` and:
+
+1. Supplies **in-memory configuration** so the host starts without real Azure resources
+2. **Removes** the Functions gRPC worker and Azure SDK singletons (`BlobServiceClient`, `ServiceBusClient`, …)
+3. **Replaces** Infra client interfaces with `Mock<>` singletons — blob, Service Bus, downstream HTTP clients, publishers, retry scheduler
+4. **Keeps** Api/Infra **mappers** registered from `Program` (real instances, not mocked)
+5. Registers function classes as `AddScoped<>` and maps HTTP routes in `ConfigureWebHost` via a shared `Route<THandler>` helper (bypasses Functions middleware)
+
+When a new infrastructure client is introduced:
 
 ```csharp
-// 1. Declare the mock as a public property
+// 1. Declare the mock as a public property on ApplicationFactory
 public Mock<INewClient> NewClient { get; } = new();
 
 // 2. In CreateHost → ConfigureServices: remove real registration and inject mock
 RemoveAll<INewClient>(services);
 services.AddSingleton(NewClient.Object);
-```
 
-And in `Hooks.cs`, add a reset in `BeforeScenario`:
-```csharp
+// 3. In Hooks.BeforeScenario — reset per scenario
 factory.NewClient.Reset();
-```
 
-When a new Azure Function is added that uses HTTP triggers, also add its route in `ConfigureWebHost`:
-```csharp
-endpoints.MapPost("/api/new/route", Route<NewReceiver>((fn, req, ct) => fn.Run(req, ct)));
+// 4. In ConfigureWebHost — map new HTTP function route when needed
+endpoints.MapPost("/api/foo/created", Route<FooReceiver>((fn, req, ct) => fn.ProcessWebhookAsync(req, ct)));
 ```
 
 ---
@@ -344,7 +307,7 @@ endpoints.MapPost("/api/new/route", Route<NewReceiver>((fn, req, ct) => fn.Run(r
 Add constants to `Support/ScenarioContextKeys.cs` for any new context values:
 
 ```csharp
-internal const string CapturedNewEvents = "CapturedNewEvents";
+internal const string CapturedOutboundEvents = "CapturedOutboundEvents";
 ```
 
 ---
@@ -373,19 +336,17 @@ The factory is **shared across scenarios within a feature** but mocks are reset 
 
 ---
 
-## Step 8: TestDataBuilder
+## Step 8: TestDataBuilder (optional)
 
-`TestDataBuilder` (in `Support/`) provides static factory methods for building `Order` objects. Add new builder methods here when new scenarios require order shapes not covered by existing helpers:
+`TestDataBuilder` (in `Support/`) provides static factory methods for building in-memory domain or upstream models used in programmatic scenarios. Add methods when new shapes are needed — name by scenario intent, not by copying production class names blindly:
 
 ```csharp
-// Existing helpers:
-BuildRtwOrder(orderId, country, shippingCode)
-BuildCustomMadeOrder(orderId, country, shippingCode)
-BuildOnlineAlterationOrder(orderId, country, shippingCode)
-BuildShipToStoreOrder(orderId, storeCode)
-BuildOrderWithAdyenPsp(orderId, country, pspReference)
-BuildOrderWithoutAdyenPsp(orderId, country)
+// Examples — adapt to your domain:
+BuildMinimal{Entity}(id)
+Build{Entity}With{Variant}(id, ...)
 ```
+
+Prefer `Fixture` / `FixtureFactory` customizations for simple random data; use `TestDataBuilder` when scenarios need repeatable, named shapes.
 
 ---
 
@@ -396,55 +357,51 @@ BuildOrderWithoutAdyenPsp(orderId, country)
 When adding a receiver on `/api/foo/created`, add a row to the `Examples` table in `Features/Webhooks/Receivers/ReceiverEndpoints.feature`:
 
 ```gherkin
-      | /api/foo/created | {"id":42,"order_id":99} | FooCreated | 42 | 99 |
+      | /api/foo/created | {"id":42,"ref":"99"} | FooCreated | 42 | 42 |
 ```
 
-Also implement the receiver service, add `EventType`, register in `Program.cs`, and map the route in `ApplicationFactory.ConfigureWebHost`. Standard receivers reuse steps from `ReceiverEndpointsStepDefinitions.cs`.
+Also implement the receiver service, add `EventType` (or equivalent), register in `Program.cs`, and map the route in `ApplicationFactory.ConfigureWebHost`. Standard receivers reuse steps from `ReceiverEndpointsStepDefinitions.cs`.
 
 ### New processor file-driven scenario
 
-1. Create `Scenarios/OrderCreated/MyNewScenario/SourceOrder.json`:
+1. Create `Scenarios/FooCreated/MyNewScenario/SourceInput.json`:
 ```json
 {
-  "data": {
-    "order": {
-      "id": "gid://example/Order/99999",
-      "legacyResourceId": "99999",
-      ...
-    }
-  }
+  "id": "resource-99999",
+  "legacyResourceId": "99999"
 }
 ```
 
-2. Create `Scenarios/OrderCreated/MyNewScenario/ExpectedOutboundCreatedEvent.json`:
+2. Create `Scenarios/FooCreated/MyNewScenario/ExpectedOutbound.json`:
 ```json
 {
-  "OrderId": "ORDER-99999",
+  "ResourceId": "99999",
   "OrgId": "...",
-  "OrderLine": [ { ... } ]
+  "Lines": [ { } ]
 }
 ```
 
-3. Add to `Features/Webhooks/Processors/OrderCreated/OrderCreated-Files.feature` Examples table:
+3. Add to `Features/Webhooks/Processors/FooCreated/FooCreated-Files.feature` Examples table:
 ```gherkin
     Examples:
-      | scenarioFolder              |
-      | ShipToStore-ReadyToWearItem |
-      | MyNewScenario               |
+      | scenarioFolder    |
+      | HappyPath-Example |
+      | MyNewScenario     |
 ```
 
 ---
 
 ## Checklist before writing component tests
 
-- [ ] Feature file is under the correct folder (`Webhooks/Receivers/`, `Webhooks/Processors/{Name}/`, or `GetOrders/`)
+- [ ] Feature file is under the correct folder (`Webhooks/Receivers/`, `Webhooks/Processors/{FlowName}/`, or `Queries/`)
 - [ ] File name and `Feature:` title describe the same Azure Function
-- [ ] Processors have separate files for programmatic (`{Name}.feature`), file-driven (`{Name}-Files.feature`), and Service Bus failure scenarios where applicable
-- [ ] `When` steps use the full processor name (`order created processor`, `order updated processor`, `order transaction created processor`)
+- [ ] Processors have separate files for programmatic (`{FlowName}.feature`), file-driven (`{FlowName}-Files.feature`), and Service Bus failure scenarios where applicable
+- [ ] `When` steps use the full processor / flow name (e.g. `foo created processor`)
 - [ ] Scenario outline titles and descriptions use `-`, not en-dashes
 - [ ] Reuse existing steps from other `[Binding]` classes before adding new ones
 - [ ] New infrastructure clients are added to `ApplicationFactory.cs` and reset in `Hooks.cs`
+- [ ] Mappers stay as **real** registrations — not mocked
 - [ ] New context keys are added to `ScenarioContextKeys.cs`
-- [ ] File-driven scenarios place fixtures under `Scenarios/{Domain}/{ScenarioName}/`
+- [ ] File-driven scenarios place fixtures under `Scenarios/{FlowName}/{ScenarioName}/`
 - [ ] Non-deterministic fields are added to `IgnoredJsonProperties` in the file-driven step definitions
 - [ ] New Azure Function HTTP routes are registered in `ApplicationFactory.ConfigureWebHost`

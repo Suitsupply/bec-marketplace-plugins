@@ -87,7 +87,7 @@ var total = envelope.Source.Lines.SumLineTotals();
 | `{Type}Extensions` | Chapter standard for pure model logic |
 | `ServiceCollectionExtensions` | DI registration — `AddInfrastructure`, `AddServiceInfo` |
 | `*Constants` | Named constant holders — no behaviour |
-| `UnitTests/Helpers/` | Test fixtures only (`FixtureFactory`, `FixtureExtensions`) — not shipped in `src/` |
+| `UnitTests/Helpers/` | `FixtureFactory`, AutoFixture **customizations**, `ArgumentsNullChecker` — **no** shared `Create*` builder extensions |
 
 ---
 

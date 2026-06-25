@@ -17,21 +17,23 @@ Hub skill for Backend Chapter test strategy. Works on Cursor and Claude Code.
         ┌─────────────┐
         │ Integration │  Few — live deployed host, real infra
         ├─────────────┤
-        │  Component  │  Many — in-process, Infra mocked
+        │  Component  │  Some — in-process, Infra mocked
         ├─────────────┤
-        │    Unit     │  Some — isolated classes, all deps mocked
+        │    Unit     │  Many — isolated classes; mock services/clients; real mappers
         └─────────────┘
 ```
 
 **Goal:** deployment confidence — merge and ship without manual verification.
 
+**Volume:** **many** unit tests, **some** component tests, **few** integration tests.
+
 ## When to use each tier
 
 | Tier | Project | What it proves | When to add |
 |------|---------|----------------|-------------|
-| **Unit** | `test/{ServiceName}.UnitTests/` | Single class logic with mocked dependencies | Edge cases unit tests cover cheaper than component tests |
-| **Component** | `test/{ServiceName}.ComponentTests/` | HTTP/Service Bus function in-process end-to-end; Infra fully mocked | Default for new Azure Function flows |
-| **Integration** | `test/{ServiceName}.IntegrationTests/` | Live deployed host; real blob/HTTP side effects | Smoke auth checks; critical paths post-deploy |
+| **Unit** | `test/{ServiceName}.UnitTests/` | Single class logic with mocked services and client interfaces; **real mapper instances**; exercise branching and edge cases | Default for all testable App logic — aim for close to **100%** line and branch coverage (excludes wiring, DI, Infra clients) |
+| **Component** | `test/{ServiceName}.ComponentTests/` | HTTP/Service Bus function in-process end-to-end; Infra fully mocked (blob, queue, **HTTP clients**, publishers) | Default for new Azure Function flows |
+| **Integration** | `test/{ServiceName}.IntegrationTests/` | Live deployed host; real blob/HTTP side effects | **TST:** `@smoke` + at least one `@integration` per functional flow/feature; **PRD:** `@smoke` only |
 
 Apply **analyze-test-suite** when assessing suite health or planning coverage for a ticket.
 
@@ -51,7 +53,14 @@ Apply **analyze-test-suite** when assessing suite health or planning coverage fo
 - **Moq** + **AutoFixture** in unit and component tests; **no Moq** in integration tests
 - **coverlet** for unit/component coverage (`CollectCoverage=true`)
 - Standard `PropertyGroup` blocks on every test `.csproj` — see **dotnet-best-practices** [reference/5_csproj.md](../dotnet-best-practices/reference/5_csproj.md) (`IsPackable` false; coverlet on unit/component)
-- Mirror `src/` folder structure under each test project
+
+### Project layout (by tier)
+
+| Tier | Layout | Detail |
+|------|--------|--------|
+| **Unit** | **Mirrors `src/` exactly** | `test/{ServiceName}.UnitTests/{Layer}/…/{Class}Tests.cs` — same folder tree and namespaces as production, with `.UnitTests` in the namespace. See **write-unit-tests**. |
+| **Component** | **Feature/flow layout** — not a `src/` mirror | `Features/`, `StepDefinitions/`, `Support/`, `Scenarios/` grouped by functional flow. See **write-component-tests**. |
+| **Integration** | **Feature/flow layout** — not a `src/` mirror | Same Reqnroll shape as component (`Features/`, `StepDefinitions/`, `Support/`, `Scenarios/`) plus per-environment `*.runsettings`. See **write-integration-tests**. |
 
 ## Cross-skill rule
 
@@ -65,6 +74,6 @@ After writing production code (**dotnet-best-practices** references 12–18), ap
 
 ## Sub-skills
 
-- **write-unit-tests** — NUnit, base/derived classes, `FixtureFactory`, `ArgumentsNullChecker`
+- **write-unit-tests** — NUnit, base/derived classes, `FixtureFactory`, `ArgumentsNullChecker`, real mappers
 - **write-component-tests** — Reqnroll, `ApplicationFactory`, feature file naming
 - **write-integration-tests** — `@smoke` / `@integration`, runsettings, side-effect polling

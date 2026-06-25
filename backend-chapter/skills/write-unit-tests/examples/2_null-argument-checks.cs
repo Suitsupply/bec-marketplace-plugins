@@ -9,6 +9,7 @@ public static class FooServiceTests
         protected readonly FooService Sut = new(Mock.Of<IFooDependency>().Object);
     }
 
+    // Verifies all public method parameters are null-guarded via ArgumentsNullChecker.
     public class NullArgumentChecks : FooServiceTestsBase
     {
         [Test]
