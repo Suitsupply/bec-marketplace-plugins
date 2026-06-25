@@ -32,8 +32,7 @@ Available on **Cursor and Claude Code** via the shared `skills/` folder.
 
 | Skill | Description |
 |-------|-------------|
-| [`dotnet-best-practices`](./skills/dotnet-best-practices/SKILL.md) | Hub — chapter C# standards, EditorConfig, skill map, async/DI/nullability/code review |
-| [`write-src-code`](./skills/write-src-code/SKILL.md) | Production code: Azure Functions, services, enrichment, mappers, Infra clients |
+| [`dotnet-best-practices`](./skills/dotnet-best-practices/SKILL.md) | Hub — chapter C# standards, EditorConfig, production templates (refs 12–18), async/DI/nullability/code review |
 | [`write-tests`](./skills/write-tests/SKILL.md) | Testing pyramid and routing to test sub-skills |
 | [`write-unit-tests`](./skills/write-unit-tests/SKILL.md) | NUnit unit test conventions |
 | [`write-component-tests`](./skills/write-component-tests/SKILL.md) | Reqnroll component test conventions |

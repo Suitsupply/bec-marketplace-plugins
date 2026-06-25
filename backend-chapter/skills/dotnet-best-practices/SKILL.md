@@ -3,7 +3,7 @@ name: dotnet-best-practices
 description: >-
   Suitsupply Backend Chapter .NET and C# standards: project structure, naming,
   async, error handling, nullability, dependency injection, code review,
-  performance, and EditorConfig rules. Hub skill — links to write-src-code and
+  performance, EditorConfig, and production-code templates. Hub skill — links to
   write-tests sub-skills. Use when writing, reviewing, or refactoring C#,
   creating backend services, or asking about coding standards.
 ---
@@ -12,9 +12,9 @@ description: >-
 
 Hub skill for Backend Chapter C# development. Works on Cursor and Claude Code.
 
-**Guidelines** apply to all backends (microservices, Web Apps, tools). **Integration examples** (webhooks, queues, enrichment) are optional — see [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md).
+**Guidelines** apply to all backends (microservices, Web Apps, tools). **Integration examples** (webhooks, queues, enrichment) are optional — see [14_integration-service-patterns.md](reference/14_integration-service-patterns.md).
 
-For production code patterns apply **write-src-code**. For tests apply **write-tests** (routes to unit/component/integration sub-skills).
+**Single skill** for chapter standards and production templates. For tests apply **write-tests**.
 
 ## Skill map
 
@@ -32,9 +32,15 @@ For production code patterns apply **write-src-code**. For tests apply **write-t
 | 9 | Extensions vs Helpers | [9_extensions-vs-helpers.md](reference/9_extensions-vs-helpers.md) |
 | 10 | Named private methods | [10_named-private-methods.md](reference/10_named-private-methods.md) |
 | 11 | SRP, DRY, SOLID, patterns | [11_principles-and-patterns.md](reference/11_principles-and-patterns.md) |
+| 12 | Configuration validation template | [12_configuration-validation.md](reference/12_configuration-validation.md) |
+| 13 | New Infra client template | [13_infra-clients.md](reference/13_infra-clients.md) |
+| 14 | Integration patterns (optional) | [14_integration-service-patterns.md](reference/14_integration-service-patterns.md) |
+| 15 | Azure Functions (optional) | [15_azure-functions.md](reference/15_azure-functions.md) |
+| 16 | Enrichment / outbound mapping (optional) | [16_enrichment-and-mappers.md](reference/16_enrichment-and-mappers.md) |
+| 17 | Models and Api mappers template | [17_models-and-mappers.md](reference/17_models-and-mappers.md) |
+| 18 | `Program.cs` / host bootstrap | [18_program-registration-and-host.md](reference/18_program-registration-and-host.md) |
 | — | ServiceInfo / shared Api packages | [Chapter common packages](#chapter-common-packages) |
-| — | Add function, service, client, mapper | `write-src-code` |
-| — | Integration service patterns (optional) | [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md) |
+| — | Production `.cs` examples | [examples/production/](examples/production/) |
 | — | Write tests (unspecified tier) | `write-tests` |
 | — | Unit tests | `write-unit-tests` |
 | — | Component / Reqnroll tests | `write-component-tests` |
@@ -58,6 +64,13 @@ Repo-specific `.cursor/skills/` in a project extend these chapter skills. On con
 | 9 | [9_extensions-vs-helpers.md](reference/9_extensions-vs-helpers.md) | Extensions over `*Helper` classes |
 | 10 | [10_named-private-methods.md](reference/10_named-private-methods.md) | Named private extraction |
 | 11 | [11_principles-and-patterns.md](reference/11_principles-and-patterns.md) | SOLID, DRY, patterns index |
+| 12 | [12_configuration-validation.md](reference/12_configuration-validation.md) | FluentValidation + `ValidateOnStart()` |
+| 13 | [13_infra-clients.md](reference/13_infra-clients.md) | New downstream client checklist |
+| 14 | [14_integration-service-patterns.md](reference/14_integration-service-patterns.md) | Optional integration patterns |
+| 15 | [15_azure-functions.md](reference/15_azure-functions.md) | Optional Functions receivers/processors |
+| 16 | [16_enrichment-and-mappers.md](reference/16_enrichment-and-mappers.md) | Optional enrichment; Infra outbound mapping |
+| 17 | [17_models-and-mappers.md](reference/17_models-and-mappers.md) | Model records; Api mapper template |
+| 18 | [18_program-registration-and-host.md](reference/18_program-registration-and-host.md) | `Program.cs` bootstrap, DI lifetimes, Web App host |
 
 ## Examples
 
@@ -72,7 +85,7 @@ Repo-specific `.cursor/skills/` in a project extend these chapter skills. On con
 | 7 | [7_architecture-patterns.md](examples/7_architecture-patterns.md) | Clients, interfaces, layers, mappers, DRY |
 | 8 | [8_style-and-performance.md](examples/8_style-and-performance.md) | Immutability, LINQ, naming, performance |
 
-Production templates: **write-src-code** — [examples/](../write-src-code/examples/). Test templates: **write-tests** sub-skills.
+Production `.cs` templates: [examples/production/](examples/production/). Test templates: **write-tests** sub-skills.
 
 ---
 
@@ -190,7 +203,7 @@ Infrastructure and delivery live under `devops/`, separate from application code
 
 ## Chapter common packages
 
-Shared **Suitsupply** NuGet packages registered on every Api host. Registration details for new services: **write-src-code** §4.
+Shared **Suitsupply** NuGet packages registered on every Api host. Bootstrap order and host variants: [18_program-registration-and-host.md](reference/18_program-registration-and-host.md).
 
 ### ServiceInfo (`Suitsupply.Common.ServiceInfo`)
 
@@ -239,7 +252,7 @@ services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 
 **Response shape** (`GET /api/home` or `GET /`): `serviceName`, `assemblyVersion`, `environment`, `machineName`, `osDescription`. Used by `@smoke` integration tests for connectivity checks.
 
-`ServiceSettings` validator and fail-early pattern: [Configuration validation (fail early)](#configuration-validation-fail-early), **write-src-code** [1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md).
+`ServiceSettings` validator and fail-early pattern: [Configuration validation (fail early)](#configuration-validation-fail-early), [12_configuration-validation.md](reference/12_configuration-validation.md).
 
 ---
 
@@ -259,7 +272,8 @@ services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 | Extension classes | `{Type}Extensions`; avoid helper | `OrderExtensions`, `MoneyExtensions` |
 | Test outer class | `{ClassUnderTest}Tests` static | `FooReceiverTests` |
 | Test method | `Should{Outcome}_When{Condition}` | `ShouldReturnAccepted_WhenPayloadValid` |
-| Positional records | One parameter per line | See write-src-code §5 |
+| Positional records | One parameter per line | [17_models-and-mappers.md](reference/17_models-and-mappers.md) |
+| API versioning | In **folders/namespaces** only — never in type names | `Api/Mappers/v1/FooWebhookMapper.cs`, not `FooWebhookMapperV1` |
 
 **Downstream client layout:** interfaces in `App/Clients/Interfaces/`; implementations in `Infra/Clients/{Name}/`. **One client per downstream component** — never merge unrelated external systems into a single `I*` client. See [4_downstream-clients.md](reference/4_downstream-clients.md).
 
@@ -352,29 +366,19 @@ Examples: [3_nullability.md](examples/3_nullability.md).
 - **No service locator** — ban `IServiceProvider.GetService` in business code.
 - Register infra in `Infra/Extensions/ServiceCollectionExtensions.AddInfrastructure()`.
 - Register App services in host `Program.cs`.
-- **Configuration (fail early):** every settings class bound from `IConfiguration` must use `AddOptions<T>().Bind(...).ValidateOnStart()` with a FluentValidation `AbstractValidator<T>` via `FluentValidateOptions<T>`. The host must not start with missing or invalid config. See **Configuration validation** below and **write-src-code** [reference/1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md).
+- **Configuration (fail early):** every settings class bound from `IConfiguration` must use `ValidateOnStart()` with FluentValidation — see [Configuration validation](#configuration-validation-fail-early) and [12_configuration-validation.md](reference/12_configuration-validation.md).
 
-Details and registration checklist: **write-src-code** §3–4.
+Bootstrap checklist and lifetimes: [18_program-registration-and-host.md](reference/18_program-registration-and-host.md).
 
 ---
 
 ## Configuration validation (fail early)
 
-**Every setting is validated on startup.** No exceptions for “simple” or “optional-looking” sections — if code reads `IOptions<T>`, `T` must have a validator and `ValidateOnStart()`.
+**Every setting is validated on startup** — if code reads `IOptions<T>`, `T` must have a FluentValidation `AbstractValidator<T>`, `FluentValidateOptions<T>`, and `ValidateOnStart()`. Blocking in code review when missing.
 
-| Requirement | Detail |
-|-------------|--------|
-| Binding | `AddOptions<TSettings>().Bind(config.GetSection(nameof(TSettings))).ValidateOnStart()` |
-| Validation | `FluentValidateOptions<TSettings>` + `AbstractValidator<TSettings>` |
-| Error messages | `"<Section>:<Property> is required in configuration"` (or constraint-specific text) |
-| Settings type | `[ExcludeFromCodeCoverage]` `record` with `init` properties |
-| Tests | Unit-test each validator in `{ServiceName}.UnitTests` |
+**Applies to:** `ServiceSettings`, every Infra client settings record, Api-layer options, and any future `IOptions<T>`.
 
-**Applies to:** `ServiceSettings`, every Infra client settings record, Api-layer options (retry, messaging, etc.), and any future `IOptions<T>`.
-
-**Blocking in code review:** new or changed settings without startup validation.
-
-Full pattern: **write-src-code** [reference/1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md)
+**Implementation template** (artifacts, `FluentValidateOptions`, registration, validator examples): [12_configuration-validation.md](reference/12_configuration-validation.md)
 
 ---
 
@@ -466,9 +470,9 @@ Use chapter conventions and well-known patterns **by default** — do not reinve
 | **Strategy / Handler** | One handler per scenario + factory | [2_strategy-pattern.cs](reference/patterns/2_strategy-pattern.cs) |
 | **Factory** | `I*Factory` resolves variant handlers/clients | [1_factory-pattern.cs](reference/patterns/1_factory-pattern.cs) |
 | **Decorator** | Cross-cutting logging/metrics via `Decorate<>` | [4_decorator-pattern.cs](reference/patterns/4_decorator-pattern.cs) |
-| **Pipeline** | Multi-step flow with discrete steps (integration services) | [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md) |
-| **Mapper** | Api/Infra shape translation only — **no business logic**; **not** in App | **write-src-code** §6, [2_layer-boundaries.md](reference/2_layer-boundaries.md) |
-| **Options + validation** | `IOptions<T>` + FluentValidation fail-early | [1_configuration-validation.md](../write-src-code/reference/1_configuration-validation.md) |
+| **Pipeline** | Multi-step flow with discrete steps (integration services) | [14_integration-service-patterns.md](reference/14_integration-service-patterns.md) |
+| **Mapper** | Api/Infra shape translation only — **no business logic**; **not** in App | [17_models-and-mappers.md](reference/17_models-and-mappers.md), [2_layer-boundaries.md](reference/2_layer-boundaries.md) |
+| **Options + validation** | `IOptions<T>` + FluentValidation fail-early | [12_configuration-validation.md](reference/12_configuration-validation.md) |
 
 When adding behaviour, **extend the existing pattern** in the repo before introducing a parallel approach.
 
@@ -495,11 +499,11 @@ public sealed class BarIngestService(…) : IngestServiceBase<BarInboundEvent>(�
 }
 ```
 
-Integration example: `ReceiverServiceBase<T>` in `shopifyintegration` — see [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md).
+Integration example: `ReceiverServiceBase<T>` in `shopifyintegration` — see [14_integration-service-patterns.md](reference/14_integration-service-patterns.md).
 
 **Do not over-abstract:** one-off duplication of a few lines does not need a framework — see [4_YAGNI.cs](reference/principles/4_YAGNI.cs). Extract when repetition is real and the variation point is clear.
 
-Details and templates: **write-src-code**, [3_integration-service-patterns.md](../write-src-code/reference/3_integration-service-patterns.md), [examples/1_good-vs-bad.md](examples/1_good-vs-bad.md), [reference/11_principles-and-patterns.md](reference/11_principles-and-patterns.md).
+Details and templates: references [12](reference/12_configuration-validation.md)–[18](reference/18_program-registration-and-host.md), [examples/production/](examples/production/), [examples/1_good-vs-bad.md](examples/1_good-vs-bad.md), [reference/11_principles-and-patterns.md](reference/11_principles-and-patterns.md).
 
 ---
 
@@ -516,8 +520,8 @@ Details and templates: **write-src-code**, [3_integration-service-patterns.md](.
 | **Extract named steps** | Group each distinct action into a **private method** with a descriptive name (`PublishOutboundEventAsync`) — orchestration methods read as a short sequence of steps. See [10_named-private-methods.md](reference/10_named-private-methods.md) |
 | Method length | Short methods; if it does more than one thing, extract private methods or new types |
 | Class length | One responsibility per class; prefer several focused types over one orchestrator |
-| Comments | **No comments** unless the code cannot speak for itself: complex algorithms, non-obvious business rules, or documented assumptions. Applies to `//`, `/* */`, and **`///` XML doc comments** |
-| XML docs | Do not add `///` summary noise on self-explanatory members. Reserve for published public API surfaces where consumers need contract docs |
+| Comments | Only when code cannot speak for itself — business rules, external constraints, complex behaviour. See [6_code-structure.md](examples/6_code-structure.md#comments) |
+| XML docs | No boilerplate on self-explanatory members. Use `///` when the type name is not enough — problem, resolution steps, link to `docs/` |
 | Records | Prefer `record` / positional records for immutable DTOs and value objects |
 | Parameter mutation | Never modify an object passed as a parameter — construct a copy and return it (see [8_style-and-performance.md](examples/8_style-and-performance.md#immutability)) |
 | Logging | Always **single-line** structured templates; entry log with correlation ids; log all errors; sparse info — see [8_observability-logging.md](reference/8_observability-logging.md) |
@@ -556,7 +560,9 @@ var active =
 - Nullable continuation (`?.Value`) stays on the same line as the last operator when it belongs to that call.
 - Short chains that fit within **160 characters** may stay on one line.
 
-Details and templates: **write-src-code** general conventions.
+Examples: [8_style-and-performance.md](examples/8_style-and-performance.md#linq-formatting).
+
+Production templates: references [12](reference/12_configuration-validation.md)–[18](reference/18_program-registration-and-host.md) and [examples/production/](examples/production/).
 
 ---
 
@@ -639,7 +645,7 @@ Mark files **without testable logic** with `[ExcludeFromCodeCoverage]` so covera
 </ItemGroup>
 ```
 
-Details: **write-src-code** general conventions.
+Details: Cross-cutting build settings (above); registration templates: [18_program-registration-and-host.md](reference/18_program-registration-and-host.md).
 
 ---
 
@@ -647,6 +653,6 @@ Details: **write-src-code** general conventions.
 
 Cross-cutting good/bad patterns: [1_good-vs-bad.md](examples/1_good-vs-bad.md) (index)
 
-Production templates: **write-src-code** — [examples/](../write-src-code/examples/)
+Production templates: references [12](reference/12_configuration-validation.md)–[18](reference/18_program-registration-and-host.md) and [examples/production/](examples/production/)
 
 Test templates: **write-unit-tests**, **write-component-tests**, **write-integration-tests** — each skill's `examples/` folder

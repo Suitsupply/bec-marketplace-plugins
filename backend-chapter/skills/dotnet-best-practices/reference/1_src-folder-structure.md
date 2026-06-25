@@ -41,7 +41,7 @@ Both layouts must still follow chapter rules: **`Interfaces/`** subfolders for c
 | Fetch related data before publish | `App/Enrichment/` |
 | HTTP read/query API | `Api/Functions/Queries/` or `Controllers/` — no receivers/processors |
 
-Example of the full webhook → queue → enrich → publish flow: [3_integration-service-patterns.md](../../write-src-code/reference/3_integration-service-patterns.md). A query API or Web App CRUD service uses only the folders that apply to its flow.
+Example of the full webhook → queue → enrich → publish flow: [14_integration-service-patterns.md](14_integration-service-patterns.md). A query API or Web App CRUD service uses only the folders that apply to its flow.
 
 ---
 
@@ -61,9 +61,10 @@ Example of the full webhook → queue → enrich → publish flow: [3_integratio
 │   └── Queries/                    # HTTP read APIs (when applicable)
 ├── Controllers/                    # Web App only — or feature subfolders
 ├── Mappers/
-│   ├── FooMapper.cs
-│   └── Interfaces/
-│       └── IFooMapper.cs
+│   └── v1/                         # API version in folder when needed — not in class names
+│       ├── FooWebhookMapper.cs
+│       └── Interfaces/
+│           └── IFooWebhookMapper.cs
 └── Messaging/                      # Host-only infra (e.g. retry scheduler) — when applicable
     ├── Interfaces/
     ├── Settings/
@@ -88,7 +89,7 @@ Example of the full webhook → queue → enrich → publish flow: [3_integratio
         └── Responses/
 ```
 
-API versioning (`v1`, `v2`, …) belongs in the **Api** project (`Controllers/v1/`, `Validators/v1/Transport/`) — not in `Api.Models` folder paths.
+API versioning (`v1`, `v2`, …) belongs in the **Api** project folder structure (`Controllers/v1/`, `Mappers/v1/`, `Validators/v1/Transport/`) — **not** in `Api.Models` paths and **not** in type names (no `FooMapperV1`, `GetOrderRequestV2`).
 
 ### `{ServiceName}.App` (horizontal)
 
@@ -155,7 +156,7 @@ Repo example: `fulfillmenttools` (`ItFfTools.*`).
 {ServiceName}.Api/
 └── BulkReplay/
     ├── Controllers/v1/
-    ├── Mappers/
+    ├── Mappers/v1/
     ├── Validators/v1/Transport/
     └── SwaggerExamples/              # optional
 
@@ -219,13 +220,13 @@ File-scoped namespaces; folder path must match exactly (IDE0130).
 | Business orchestration | `App/Services/` or `App/{Feature}/Services/` |
 | Client interface | `App/Clients/Interfaces/` (horizontal) or `App/{Feature}/Clients/Interfaces/` (vertical) |
 | Client implementation | `Infra/Clients/{Name}/` (horizontal) or `Infra/{Feature}/HttpClients/` (vertical) |
-| Api boundary mapper | `Api/Mappers/Interfaces/` |
+| Api boundary mapper | `Api/Mappers/v1/Interfaces/` (or `Api/Mappers/Interfaces/` when unversioned) |
 | Infra boundary mapper | `Infra/Clients/{Name}/Mappers/` (or inline in client) |
 | Settings + FluentValidation | `*/Settings/` + `*/Validators/` |
 | DI registration (infra) | `Infra/Extensions/ServiceCollectionExtensions.cs` |
 | DI registration (host) | `Api/Program.cs` |
 
-Webhook → queue → process → publish example: [3_integration-service-patterns.md](../../write-src-code/reference/3_integration-service-patterns.md).
+Webhook → queue → process → publish example: [14_integration-service-patterns.md](14_integration-service-patterns.md).
 
 ---
 
@@ -326,4 +327,4 @@ Details: **write-integration-tests**. Pyramid and when to use each tier: **write
 - Interface placement: [3_interfaces.md](3_interfaces.md)
 - Downstream clients: [4_downstream-clients.md](4_downstream-clients.md)
 - `.csproj` PropertyGroups: [5_csproj.md](5_csproj.md)
-- Integration examples: [3_integration-service-patterns.md](../../write-src-code/reference/3_integration-service-patterns.md)
+- Integration examples: [14_integration-service-patterns.md](14_integration-service-patterns.md)

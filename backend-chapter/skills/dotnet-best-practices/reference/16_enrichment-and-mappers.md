@@ -1,14 +1,12 @@
 # Enrichment and outbound publish (integration services — optional)
 
-> Reference **5** — Enrichment pipelines and Infra-side outbound mapping for integration microservices.
+> Reference **16** — Enrichment pipelines and Infra-side outbound mapping for integration microservices.
 
 **Not chapter guidelines.** For event-driven integration services that enrich data before publishing outbound events. Query APIs, Web Apps, and simple CRUD services do not need enrichment pipelines.
 
-See [3_integration-service-patterns.md](3_integration-service-patterns.md). Reference repo: `shopifyintegration` (legacy `App/Mappers/` — target state is Infra mapping).
+**Chapter rules:** [2_layer-boundaries.md](2_layer-boundaries.md) (layer mapping, no `App/Mappers/`). This document covers integration-specific enrichment and outbound publish only.
 
-## Layer context
-
-**App works with domain models** (`App.Models`) only. Api converts HTTP DTOs → domain before calling App; Infra converts domain ↔ wire DTOs at client boundaries (including publish). **No `App/Mappers/`** — see [../../dotnet-best-practices/reference/2_layer-boundaries.md](../../dotnet-best-practices/reference/2_layer-boundaries.md).
+See [14_integration-service-patterns.md](14_integration-service-patterns.md). Reference repo: `shopifyintegration` (legacy `App/Mappers/` — target state is Infra mapping).
 
 ## Flow — business logic before mapping
 
@@ -88,6 +86,6 @@ public async Task<string> PublishAsync(PublishContext context, CancellationToken
 - Output: wire/publish DTO in `Infra/Clients/{Publisher}/Models/`
 - **Not allowed in mapper:** HTTP/client calls, fetching missing data, business branching, classification, validation rules
 
-For **HTTP response mapping** (non-integration), use `Api/Mappers/` — see **write-src-code** §6.
+For **HTTP response mapping** (non-integration), use `Api/Mappers/` — see [17_models-and-mappers.md](17_models-and-mappers.md).
 
 Shared **structural** line mapping (no business rules) → `abstract` base in Infra. Model validation/extraction/sums → `{Type}Extensions` in App. Business classification → enrichment step.

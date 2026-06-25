@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace {ServiceName}.Api.Models.Order.Transport.Requests;
 
-public record FooCreatedRequestDto(
+public record FooCreatedRequest(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("name")] string Name);
 
@@ -21,20 +21,22 @@ public record FooCreatedWebhook(
     string Name,
     DateTimeOffset ReceivedAt);
 
-// Api/Mappers — boundary conversion (no business logic)
-namespace {ServiceName}.Api.Mappers;
+// Api/Mappers — boundary conversion (no business logic); v1 in folder/namespace, not type name
+namespace {ServiceName}.Api.Mappers.v1.Interfaces;
 
 public interface IFooWebhookMapper
 {
-    FooCreatedWebhook ToDomain(FooCreatedRequestDto dto);
+    FooCreatedWebhook ToDomain(FooCreatedRequest request);
 }
+
+namespace {ServiceName}.Api.Mappers.v1;
 
 public sealed class FooWebhookMapper : IFooWebhookMapper
 {
-    public FooCreatedWebhook ToDomain(FooCreatedRequestDto dto)
+    public FooCreatedWebhook ToDomain(FooCreatedRequest request)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        return new FooCreatedWebhook(dto.Id, dto.Name, DateTimeOffset.UtcNow);
+        ArgumentNullException.ThrowIfNull(request);
+        return new FooCreatedWebhook(request.Id, request.Name, DateTimeOffset.UtcNow);
     }
 }
 
@@ -85,7 +87,7 @@ public interface IFooClient
 // return wire?.ToDomain();
 
 // ✗ WRONG — App service takes Api DTO or Infra wire DTO
-// public Task ProcessAsync(FooCreatedRequestDto dto, …)
+// public Task ProcessAsync(FooCreatedRequest request, …)
 // public Task ProcessAsync(FooOrderWireDto dto, …)
 
 // ✓ CORRECT — App always receives/uses App.Models domain types

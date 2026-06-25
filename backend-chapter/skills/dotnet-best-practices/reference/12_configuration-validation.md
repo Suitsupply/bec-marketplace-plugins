@@ -1,8 +1,10 @@
 # Configuration validation (fail early)
 
-> Reference **1** — FluentValidation + `ValidateOnStart()` for every settings class bound from config.
+> Reference **12** — FluentValidation + `ValidateOnStart()` for every settings class bound from config.
 
-**Every** settings class bound from `IConfiguration` must be validated at startup with FluentValidation and `ValidateOnStart()`. The host must refuse to start when configuration is missing or invalid — never discover bad config on the first request or message.
+**Chapter rules:** [dotnet-best-practices hub §Configuration validation](../SKILL.md#configuration-validation-fail-early). This document is the **implementation template** (artifacts, code, registration).
+
+Every settings class bound from `IConfiguration` must use FluentValidation and `ValidateOnStart()` — the host must not start with missing or invalid config.
 
 Applies to:
 

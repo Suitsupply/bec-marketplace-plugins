@@ -55,7 +55,7 @@ Apply **analyze-test-suite** when assessing suite health or planning coverage fo
 
 ## Cross-skill rule
 
-After writing production code (**write-src-code**), apply the matching test sub-skill before considering work done.
+After writing production code (**dotnet-best-practices** references 12–18), apply the matching test sub-skill before considering work done.
 
 ## Examples
 

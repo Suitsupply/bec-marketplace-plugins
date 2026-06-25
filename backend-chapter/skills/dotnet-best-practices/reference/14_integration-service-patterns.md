@@ -1,10 +1,10 @@
 # Integration service patterns (optional — examples only)
 
-> Reference **3** — Optional receiver/processor/enrichment patterns for event-driven integration microservices.
+> Reference **14** — Optional receiver/processor/enrichment patterns for event-driven integration microservices.
 
-**Not chapter guidelines.** These patterns apply to **event-driven integration microservices** (webhook ingest → queue → process → publish). Many backends do not use them — Web Apps, query APIs, and internal tools follow **write-src-code** and **dotnet-best-practices** without this file.
+**Not chapter guidelines.** These patterns apply to **event-driven integration microservices** (webhook ingest → queue → process → publish). Many backends do not use them — Web Apps, query APIs, and internal tools follow **dotnet-best-practices** without this file.
 
-**Reference implementation:** `shopifyintegration` (receiver → blob backup → Service Bus → enrich → map → publish).
+**Reference implementation:** `shopifyintegration` (receiver → blob backup → Service Bus → enrich → publish → Infra maps on outbound).
 
 ---
 
@@ -24,7 +24,7 @@ If the service has none of the above, skip this document.
 
 ## Receive flow (example)
 
-`ReceiverServiceBase<T>` template method: deserialize → backup to blob → forward to Service Bus. Subclass supplies event type, message id, blob path, tags.
+`ReceiverServiceBase<T>` template method: backup to blob → forward to Service Bus. Api deserializes HTTP JSON → maps to domain before calling App. Subclass supplies event type, message id, blob path, tags.
 
 See `shopifyintegration`: `App/Services/Receivers/ReceiverServiceBase.cs`, `OrderCreatedReceiverService.cs`.
 
@@ -34,7 +34,7 @@ Marker interfaces: `IReceiverService`, `IFooReceiverService : IReceiverService`.
 
 ## Process flow (example)
 
-`deserialize → guard → enrich → map → publish → backup`
+`deserialize → guard → enrich → publish (domain) → backup` — inbound **deserialize/map** at the processor Function; outbound **map** runs inside the Infra publish client, not in App.
 
 - Processor service orchestrates; distinct actions as named private methods (`PublishOutboundEventAsync`, `PublishBackupAsync`).
 - Business rules in enrichment steps — not in mappers.
@@ -54,10 +54,10 @@ See `shopifyintegration`: `OrderUpdatedProcessorService.cs`, `TransactionCreated
 
 ## Enrichment and outbound publish
 
-Full detail: [5_enrichment-and-mappers.md](5_enrichment-and-mappers.md) (also optional / integration-only). App enriches; Infra maps domain → wire before publish.
+Full detail: [16_enrichment-and-mappers.md](16_enrichment-and-mappers.md) (also optional / integration-only). App enriches; Infra maps domain → wire before publish.
 
 ---
 
 ## Azure Functions templates
 
-[4_azure-functions.md](4_azure-functions.md), [../examples/](../examples/) (`1_receiver-function.cs`, `2_processor-function.cs`, `4_processor-service.cs`, `5_enrichment-pipeline.cs`, `6_webhook-model.cs`).
+[15_azure-functions.md](15_azure-functions.md), [production examples](../examples/production/) (`1_receiver-function.cs`, `2_processor-function.cs`, `4_processor-service.cs`, `5_enrichment-pipeline.cs`, `6_webhook-model.cs`).

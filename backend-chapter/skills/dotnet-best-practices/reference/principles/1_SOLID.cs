@@ -19,15 +19,16 @@ public interface ITransactionFlowHandler
 // ✓ Every ReceiverServiceBase<T> subclass can replace the base without breaking ProcessAsync.
 public abstract class ReceiverServiceBase<TModel> where TModel : class
 {
-    public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken)
+    public async Task ProcessAsync(TModel model, CancellationToken cancellationToken)
     {
-        var model = Deserialize(rawJson);
+        ArgumentNullException.ThrowIfNull(model);
+        var rawJson = Serialize(model);
         await BackupAsync(rawJson, model, cancellationToken);
         await SendToQueueAsync(rawJson, model, cancellationToken);
     }
 
     protected abstract string GetPath(TModel model);
-    private TModel Deserialize(string rawJson) => default!;
+    private string Serialize(TModel model) => default!;
     private Task BackupAsync(string rawJson, TModel model, CancellationToken ct) => Task.CompletedTask;
     private Task SendToQueueAsync(string rawJson, TModel model, CancellationToken ct) => Task.CompletedTask;
 }

@@ -90,7 +90,7 @@ await handler.HandleAsync(tx, cancellationToken);
 
 ```csharp
 // ✗ wrong — App service accepts Api HTTP DTO
-public Task ProcessAsync(FooCreatedRequestDto dto, CancellationToken ct);
+public Task ProcessAsync(FooCreatedRequest request, CancellationToken ct);
 
 // ✗ wrong — IClient exposes Infra wire DTO
 public interface IFooClient { Task<FooOrderWireDto?> GetAsync(string id, CancellationToken ct); }

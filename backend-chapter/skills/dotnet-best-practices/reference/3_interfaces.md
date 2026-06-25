@@ -55,12 +55,13 @@ Services/Receivers/
 // App/Services/Receivers/Interfaces/IReceiverService.cs
 namespace {ServiceName}.App.Services.Receivers.Interfaces;
 
-public interface IReceiverService
+public interface IReceiverService<TModel>
+    where TModel : class
 {
-    Task ProcessAsync(string rawJson, CancellationToken cancellationToken = default);
+    Task ProcessAsync(TModel model, CancellationToken cancellationToken = default);
 }
 
-public interface IFooReceiverService : IReceiverService;
+public interface IFooReceiverService : IReceiverService<FooCreatedWebhook>;
 ```
 
 ```csharp
@@ -69,9 +70,30 @@ using {ServiceName}.App.Services.Receivers.Interfaces;
 
 namespace {ServiceName}.App.Services.Receivers;
 
-public class FooReceiverService(…) : ReceiverServiceBase<FooCreatedWebhookRequest>(…), IFooReceiverService  // integration example
+public class FooReceiverService(…) : ReceiverServiceBase<FooCreatedWebhook>(…), IFooReceiverService  // integration example
 {
     …
+}
+```
+
+```csharp
+// App/Services/Processors/Interfaces/IProcessorService.cs
+namespace {ServiceName}.App.Services.Processors.Interfaces;
+
+public interface IProcessorService<TModel>
+    where TModel : class
+{
+    Task ProcessAsync(TModel model, CancellationToken cancellationToken = default);
+}
+
+public interface IFooProcessorService : IProcessorService<FooCreatedWebhook>;
+```
+
+```csharp
+// App/Services/Processors/FooProcessorService.cs
+public class FooProcessorService(…) : IFooProcessorService
+{
+    public Task ProcessAsync(FooCreatedWebhook message, CancellationToken cancellationToken) { … }
 }
 ```
 

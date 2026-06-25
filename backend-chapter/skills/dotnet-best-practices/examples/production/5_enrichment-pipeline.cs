@@ -2,7 +2,7 @@ namespace {ServiceName}.App.Enrichment;
 
 public sealed class FooEnrichmentPipeline(FetchOrderStep fetchOrderStep, FetchMetadataStep fetchMetadataStep)
 {
-    public async Task RunAsync(EnrichmentEnvelope<FooWebhookRequest> envelope, CancellationToken cancellationToken)
+    public async Task RunAsync(EnrichmentEnvelope<FooCreatedWebhook> envelope, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(envelope);
 

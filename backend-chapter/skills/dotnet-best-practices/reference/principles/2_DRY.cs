@@ -2,7 +2,7 @@
 // When the same sequence appears 3+ times (or twice with a clear variation point), extract — do not copy-paste.
 // See: patterns/3_template-method-pattern.cs, patterns/1_factory-pattern.cs, patterns/2_strategy-pattern.cs
 
-// ✗ WRONG — third receiver copying deserialize → backup → queue
+// ✗ WRONG — third receiver copying backup → queue; processor deserializes JSON in App (belongs at Api Function)
 public sealed class FooReceiverService
 {
     public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken)
@@ -10,6 +10,15 @@ public sealed class FooReceiverService
         var model = JsonSerializer.Deserialize<FooWebhookRequest>(rawJson);
         await UploadBackupAsync(rawJson, model!, cancellationToken);
         await SendToProcessorQueueAsync(rawJson, cancellationToken);
+    }
+}
+
+public sealed class FooProcessorService
+{
+    public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken)
+    {
+        var model = JsonSerializer.Deserialize<FooWebhookRequest>(rawJson);
+        await PublishAsync(model!, cancellationToken);
     }
 }
 

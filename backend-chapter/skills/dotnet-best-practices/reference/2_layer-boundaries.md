@@ -144,7 +144,7 @@ public sealed class FooReceiver(IFooReceiverService service, IFooWebhookMapper w
 {
     public async Task<IActionResult> Run(HttpRequest request, CancellationToken cancellationToken)
     {
-        var requestDto = await request.ReadFromJsonAsync<FooCreatedRequestDto>(cancellationToken);
+        var requestDto = await request.ReadFromJsonAsync<FooCreatedRequest>(cancellationToken);
         ArgumentNullException.ThrowIfNull(requestDto);
 
         var domain = webhookMapper.ToDomain(requestDto);   // DTO → domain at Api boundary
@@ -157,7 +157,17 @@ public sealed class FooReceiver(IFooReceiverService service, IFooWebhookMapper w
 public Task ProcessAsync(FooCreatedWebhook domain, CancellationToken cancellationToken) { … }
 ```
 
-For Service Bus / queue processors that today accept `rawJson`, prefer moving deserialization + DTO→domain mapping to **Api** (Function) so App receives domain models.
+For Service Bus / queue processors, deserialize and map at the **processor Function** before calling App — same boundary rule as HTTP receivers.
+
+```csharp
+// Api/Functions/Processors/FooProcessor.cs — Service Bus body → domain at Api boundary
+var domain = JsonSerializer.Deserialize<FooCreatedWebhook>(message.Body.ToString());
+ArgumentNullException.ThrowIfNull(domain);
+await processorService.ProcessAsync(domain, cancellationToken);
+
+// App/Services/Processors/FooProcessorService.cs — domain only
+public Task ProcessAsync(FooCreatedWebhook message, CancellationToken cancellationToken) { … }
+```
 
 ---
 

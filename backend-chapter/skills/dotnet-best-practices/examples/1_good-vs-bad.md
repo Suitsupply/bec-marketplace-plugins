@@ -11,3 +11,5 @@
 | 6 | [6_code-structure.md](6_code-structure.md) | Named methods, blank lines, comments, SRP |
 | 7 | [7_architecture-patterns.md](7_architecture-patterns.md) | Clients, interfaces, layers, mappers, DRY |
 | 8 | [8_style-and-performance.md](8_style-and-performance.md) | Immutability, LINQ, naming, performance |
+
+Production `.cs` templates: [production/](production/) (receivers, processors, clients, enrichment).

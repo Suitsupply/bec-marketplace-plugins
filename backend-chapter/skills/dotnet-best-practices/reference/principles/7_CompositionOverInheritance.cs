@@ -4,16 +4,15 @@
 // ✓ CORRECT — processor composes pipeline, mapper, publisher (no mega base class)
 public sealed class FooProcessorService(IFooEnrichmentPipeline enrichmentPipeline, IOutboundFooMapper mapper, IMaoPublisher publisher, IStoreServiceBusClient storeServiceBusClient)
 {
-    public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken)
+    public async Task ProcessAsync(FooCreatedWebhook message, CancellationToken cancellationToken)
     {
-        var envelope = Deserialize(rawJson);
+        ArgumentNullException.ThrowIfNull(message);
+        var envelope = new EnrichmentEnvelope<FooCreatedWebhook> { Source = message };
         await enrichmentPipeline.RunAsync(envelope, cancellationToken);
         var payload = mapper.Map(envelope);
         if (payload is null) return;
         await publisher.PublishAsync(payload, cancellationToken);
     }
-
-    private static EnrichmentEnvelope<FooWebhookRequest> Deserialize(string rawJson) => default!;
 }
 
 // ✓ ACCEPTABLE inheritance — thin template with fixed algorithm + few abstract hooks

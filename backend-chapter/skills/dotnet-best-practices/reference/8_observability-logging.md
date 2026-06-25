@@ -32,7 +32,11 @@ logger.LogInformation("{Function} invoked.", nameof(FooReceiver));
 try
 {
     var rawJson = await request.Body.ReadStreamAsString();
-    await fooCreatedReceiverService.ProcessAsync(rawJson, cancellationToken);
+    var requestDto = JsonSerializer.Deserialize<FooCreatedRequest>(rawJson);
+    ArgumentNullException.ThrowIfNull(requestDto);
+
+    var domain = fooWebhookMapper.ToDomain(requestDto);
+    await fooCreatedReceiverService.ProcessAsync(domain, cancellationToken);
     return new AcceptedResult();
 }
 catch (Exception ex)
@@ -43,7 +47,7 @@ catch (Exception ex)
 ```
 
 ```csharp
-// App/Services/Processors/FooProcessorService.cs — after deserialize
+// App/Services/Processors/FooProcessorService.cs — domain passed from Api
 logger.LogInformation("Processing foo created for order {OrderId} ({OrderName}).", message.Id, message.Name);
 ```
 
@@ -98,7 +102,7 @@ Beyond the **entry** line, add `LogInformation` only for troubleshooting, dashbo
 | Service Bus | `{Function} message {MessageId} received.` | Retry scheduler — `LogError` / `LogWarning` |
 | `_Debug` HTTP | `LogWarning` | `LogError` → HTTP 500 |
 
-Examples: [processor-function.cs](../../write-src-code/examples/2_processor-function.cs), [receiver-function.cs](../../write-src-code/examples/1_receiver-function.cs).
+Examples: [2_processor-function.cs](../examples/production/2_processor-function.cs), [1_receiver-function.cs](../examples/production/1_receiver-function.cs).
 
 ---
 

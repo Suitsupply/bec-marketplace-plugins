@@ -1,16 +1,15 @@
 // Template Method pattern — base class defines the algorithm skeleton; subclasses override specific steps.
-// Chapter: ReceiverServiceBase<TModel> — shared deserialize → backup → queue flow.
+// Chapter: ReceiverServiceBase<TModel> — shared backup → queue flow; domain arrives from Api after mapping.
 
 public abstract class ReceiverServiceBase<TModel>(ILogger logger, IEventBlobStorageClient eventBlobStorageClient, IStoreServiceBusClient storeServiceBusClient)
     where TModel : class
 {
     // Template method — fixed sequence, not overridable
-    public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken = default)
+    public async Task ProcessAsync(TModel model, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(rawJson);
-
-        var model = Deserialize(rawJson);
         ArgumentNullException.ThrowIfNull(model);
+
+        var rawJson = JsonSerializer.Serialize(model);
 
         LogReceiverEvent(model);
         await BackupAsync(rawJson, model, cancellationToken);
@@ -22,9 +21,6 @@ public abstract class ReceiverServiceBase<TModel>(ILogger logger, IEventBlobStor
     protected abstract string GetMessageId(TModel model);
     protected abstract string GetPath(TModel model);
     protected abstract IDictionary<string, string> GetTags(TModel model);
-
-    private TModel Deserialize(string rawJson) =>
-        System.Text.Json.JsonSerializer.Deserialize<TModel>(rawJson)!;
 
     private async Task BackupAsync(string rawJson, TModel model, CancellationToken cancellationToken)
     {
@@ -43,17 +39,17 @@ public abstract class ReceiverServiceBase<TModel>(ILogger logger, IEventBlobStor
 }
 
 // Concrete implementation — only hooks, no duplicated flow
-public sealed class OrderCreatedReceiverService(ILogger<OrderCreatedReceiverService> logger, IEventBlobStorageClient eventBlobStorageClient, IStoreServiceBusClient storeServiceBusClient) : ReceiverServiceBase<OrderCreatedWebhookRequest>(logger, eventBlobStorageClient, storeServiceBusClient), IOrderCreatedReceiverService
+public sealed class OrderCreatedReceiverService(ILogger<OrderCreatedReceiverService> logger, IEventBlobStorageClient eventBlobStorageClient, IStoreServiceBusClient storeServiceBusClient) : ReceiverServiceBase<OrderCreatedWebhook>(logger, eventBlobStorageClient, storeServiceBusClient), IOrderCreatedReceiverService
 {
     protected override EventType EventType => EventType.OrderCreated;
 
-    protected override string GetMessageId(OrderCreatedWebhookRequest model) => model.Id;
+    protected override string GetMessageId(OrderCreatedWebhook model) => model.Id.ToString();
 
-    protected override string GetPath(OrderCreatedWebhookRequest model) =>
+    protected override string GetPath(OrderCreatedWebhook model) =>
         $"orders/created/{model.Id}.json";
 
-    protected override IDictionary<string, string> GetTags(OrderCreatedWebhookRequest model) =>
-        new Dictionary<string, string> { ["orderId"] = model.Name };
+    protected override IDictionary<string, string> GetTags(OrderCreatedWebhook model) =>
+        new Dictionary<string, string> { ["orderId"] = model.Name ?? string.Empty };
 }
 
 // ✗ WRONG — copy-paste ProcessAsync in every receiver

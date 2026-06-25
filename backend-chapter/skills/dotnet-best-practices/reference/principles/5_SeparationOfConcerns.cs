@@ -24,7 +24,7 @@ public sealed class FooReceiver(IFooService service, IFooWebhookMapper mapper)
 {
     public async Task Run(HttpRequest req, CancellationToken ct)
     {
-        var dto = await req.ReadFromJsonAsync<FooCreatedRequestDto>(ct);
+        var dto = await req.ReadFromJsonAsync<FooCreatedRequest>(ct);
         await service.ProcessAsync(mapper.ToDomain(dto!), ct);
     }
 }

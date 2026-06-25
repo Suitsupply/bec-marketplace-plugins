@@ -1,7 +1,7 @@
 {
   "name": "backend-chapter",
   "version": "1.2.0",
-  "description": "Backend Chapter plugin: .NET skill suite (dotnet-best-practices, write-src-code, write-tests), Jira workflows, and development agents. Skills work on Cursor and Claude Code.",
+  "description": "Backend Chapter plugin: .NET skill suite (dotnet-best-practices, write-tests), Jira workflows, and development agents. Skills work on Cursor and Claude Code.",
   "author": {
     "name": "Suitsupply B.V."
   },

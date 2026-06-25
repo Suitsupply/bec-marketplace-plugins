@@ -1,9 +1,8 @@
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using {ServiceName}.App.Clients.Interfaces;
 using {ServiceName}.App.Enrichment;
 using {ServiceName}.App.Models.Enrichment;
-using {ServiceName}.App.Models.Webhooks;
+using {ServiceName}.App.Models.Foo.Models.Webhooks;
 using {ServiceName}.App.Services.Processors.Interfaces;
 
 namespace {ServiceName}.App.Services.Processors;
@@ -12,26 +11,22 @@ public class FooProcessorService(
     ILogger<FooProcessorService> logger,
     FooEnrichmentPipeline enrichmentPipeline,
     IOutboundPublisher outboundPublisher,
-    IStoreServiceBusClient storeServiceBusClient)
-    : IFooProcessorService
+    IStoreServiceBusClient storeServiceBusClient) : IFooProcessorService
 {
-    public async Task ProcessAsync(string rawJson, CancellationToken cancellationToken = default)
+    public async Task ProcessAsync(FooCreatedWebhook message, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(rawJson);
-
-        var message = JsonSerializer.Deserialize<FooWebhookRequest>(rawJson);
         ArgumentNullException.ThrowIfNull(message);
 
         logger.LogInformation("Processing foo created for order {OrderId} ({OrderName}).", message.Id, message.Name);
 
-        var envelope = new EnrichmentEnvelope<FooWebhookRequest> { Source = message };
+        var envelope = new EnrichmentEnvelope<FooCreatedWebhook> { Source = message };
         await enrichmentPipeline.RunAsync(envelope, cancellationToken);
 
         var messageId = await PublishEventAsync(message, envelope, cancellationToken);
         await PublishBackupAsync(message, envelope, messageId, cancellationToken);
     }
 
-    private async Task<string> PublishEventAsync(FooWebhookRequest message, EnrichmentEnvelope<FooWebhookRequest> envelope, CancellationToken cancellationToken)
+    private async Task<string> PublishEventAsync(FooCreatedWebhook message, EnrichmentEnvelope<FooCreatedWebhook> envelope, CancellationToken cancellationToken)
     {
         logger.LogInformation("Publishing outbound event for order {OrderId}.", message.Id);
 
@@ -42,7 +37,7 @@ public class FooProcessorService(
         return messageId;
     }
 
-    private async Task PublishBackupAsync(FooWebhookRequest message, EnrichmentEnvelope<FooWebhookRequest> envelope, string messageId, CancellationToken cancellationToken)
+    private async Task PublishBackupAsync(FooCreatedWebhook message, EnrichmentEnvelope<FooCreatedWebhook> envelope, string messageId, CancellationToken cancellationToken)
     {
         logger.LogInformation("Sending backup for order {OrderId}; messageId={MessageId}.", message.Id, messageId);
 
