@@ -1,8 +1,8 @@
-using {ServiceName}.Api.Functions.Receivers;
+using {ServiceName}.Api.Functions.Person;
 using {ServiceName}.Api.Mappers.v1;
 using {ServiceName}.UnitTests.Helpers;
 
-namespace {ServiceName}.UnitTests.Api.Functions.Receivers;
+namespace {ServiceName}.UnitTests.Api.Functions.Person;
 
 public static class FooReceiverTests
 {
@@ -10,13 +10,13 @@ public static class FooReceiverTests
     {
         protected readonly Fixture Fixture = FixtureFactory.Create();
         protected readonly Mock<IFooDependency> Dependency;
-        protected readonly FooWebhookMapper WebhookMapper = new();
         protected readonly FooReceiver Sut;
 
         protected FooReceiverTestsBase()
         {
             Dependency = new Mock<IFooDependency>();
-            Sut = new FooReceiver(Dependency.Object, WebhookMapper);
+            // FooMapper is static — not injected. The SUT calls FooMapper.ToDomain(...) directly.
+            Sut = new FooReceiver(Dependency.Object);
         }
     }
 
@@ -26,6 +26,7 @@ public static class FooReceiverTests
         [Test]
         public void ShouldEnforceNullChecksOnMethods()
         {
+            // Act & Assert
             ArgumentsNullChecker.CheckMethodParameters(Sut);
         }
     }

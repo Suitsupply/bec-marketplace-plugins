@@ -10,6 +10,8 @@ description: >-
 
 Integration tests execute against a **live, deployed** host — no mocking. See **write-tests** for the testing pyramid and CI stages.
 
+> **Scope note — examples are demonstration-only.** The webhook / blob-backup-polling / `BlobBackupPoller` / file-driven outbound-event shapes below come from one specific event-driven integration service (`shopifyintegration`) and are **illustrative**. They are **not** required for every service. Implement **only what your service exposes** — e.g. a query/CRUD host may have just a `@smoke` connectivity-and-auth feature plus one `@integration` GET feature (no blob polling, no outbound fixtures). The settings/runsettings/tagging/hooks conventions apply regardless of which subset you use.
+
 **Coverage by environment:** **TST** — `@smoke` plus at least one `@integration` feature per functional flow/feature; **PRD** — `@smoke` only (never `@integration`).
 
 ## Examples
@@ -32,7 +34,7 @@ All integration tests live in `test/{ServiceName}.IntegrationTests/`.
 
 ## Framework
 
-- **Test runner**: NUnit 3 via `Reqnroll.NUnit` 3.3.4
+- **Test runner**: NUnit 4 (latest stable) via `Reqnroll.NUnit` 3.3.4
 - **HTTP**: plain `HttpClient` with `BaseAddress` set to the deployed function host
 - **Blob polling**: `BlobBackupPoller` (tag-based Azure Blob query)
 - **Global usings** already active: `NUnit.Framework` (no `using` needed)
@@ -68,7 +70,7 @@ test/{ServiceName}.IntegrationTests/
 ├── Support/
 │   ├── BlobBackupPoller.cs                # Polls blob container by tag query with timeout
 │   ├── Hooks.cs                           # Lifecycle: load settings, create HttpClient
-│   ├── IntegrationTestSettings.cs         # Settings: env vars → local file fallback
+│   ├── IntegrationTestSettings.cs         # Settings: env vars → local file → committed defaults
 │   └── JsonFixtureComparer.cs             # Deep JSON equality, same as component tests
 ├── Scenarios/                             # JSON fixture files
 │   ├── OrderCreated/
@@ -83,8 +85,8 @@ test/{ServiceName}.IntegrationTests/
 │       └── <ScenarioName>/
 │           ├── WebhookPayload.json        # Minimal { "id": ..., "order_id": ... }
 │           └── ExpectedOutboundPaymentEvent.json
+├── integrationtests.json                  # Committed localhost defaults — used by default in Visual Studio
 ├── integrationtests.tst.runsettings       # TST: @smoke + @integration
-├── integrationtests.acc.runsettings       # ACC: @smoke + @integration
 └── integrationtests.prd.runsettings       # PRD: @smoke only
 ```
 
@@ -96,8 +98,8 @@ Every feature must be tagged with exactly one of:
 
 | Tag | Meaning | Environments |
 |---|---|---|
-| `@smoke` | No function key, no blob polling. Verifies basic connectivity and auth enforcement. | TST, ACC, PRD |
-| `@integration` | Requires whatever secrets/settings your scenarios need (e.g. function key, storage connection string). Posts real requests and asserts live side effects. | TST, ACC only — **never PRD** |
+| `@smoke` | No function key, no blob polling. Verifies basic connectivity and auth enforcement. | TST, PRD |
+| `@integration` | Requires whatever secrets/settings your scenarios need (e.g. function key, storage connection string). Posts real requests and asserts live side effects. | TST only — **never PRD** |
 
 Place the tag on the `Feature:` line:
 
@@ -122,7 +124,6 @@ Three runsettings files control which tests run and which host URL is used:
 | File | Environments tested | Secrets needed |
 |---|---|---|
 | `integrationtests.tst.runsettings` | TST | Whatever your `@integration` features require — via CI env vars (see below) |
-| `integrationtests.acc.runsettings` | ACC | Same as TST |
 | `integrationtests.prd.runsettings` | PRD | None (`@smoke` only) |
 
 The **host URL** (e.g. `FUNCTIONS_HOST_URL`) can be hardcoded in runsettings — it is not a secret. **Secrets** are never hardcoded in runsettings; the pipeline injects them as environment variables (variable groups).
@@ -138,10 +139,11 @@ Adding a new environment:
 
 ## Step 3: Settings resolution
 
-`IntegrationTestSettings.Load()` resolves required values in priority order:
+`IntegrationTestSettings.Load()` resolves required values in priority order (first wins):
 
-1. **Environment variable** — set by CI pipeline via variable group
-2. **`integrationtests.local.json`** — gitignored file next to the `.csproj` for local development
+1. **Environment variable** — set by the selected `.runsettings` file or the CI pipeline variable group
+2. **`integrationtests.local.json`** — gitignored file next to the `.csproj` for personal overrides/secrets
+3. **`integrationtests.json`** — committed, non-secret defaults (e.g. `"FUNCTIONS_HOST_URL": "http://localhost:7071/"`) next to the `.csproj`, copied to the output directory. Used **by default when running in Visual Studio** with no env vars or local file, so a plain run targets a locally running `func start`. Never put secrets here.
 
 Define one property per secret or config value your `@integration` features need. **Names are service-specific** — the example below is from shopifyintegration, not a chapter-wide standard:
 
@@ -307,7 +309,7 @@ public sealed class MyFlowStepDefinitions(FeatureContext featureContext, Scenari
 Conventions:
 - Primary constructor with `FeatureContext featureContext, ScenarioContext scenarioContext`
 - `public sealed` with `[Binding]`
-- Access settings via `featureContext.Get<IntegrationTestSettings>(Hooks.SettingsKey)` (only available in `@integration` features)
+- Access settings via `featureContext.Get<IntegrationTestSettings>(Hooks.SettingsKey)` (available in all features — `@smoke` and `@integration` alike)
 - Access `HttpClient` via `scenarioContext.Get<HttpClient>(Hooks.HttpClientKey)`
 - Use `Hooks.SettingsKey`, `Hooks.HttpClientKey`, `Hooks.ResponseKey` for context keys (not a separate `ScenarioContextKeys` class)
 - For inline scenario context, use string literals as keys (e.g. `"WebhookPayload"`, `"ExpectedOutboundFixture"`, `"TestStartedAt"`)
@@ -318,11 +320,11 @@ Conventions:
 
 | Hook | Tag filter | Scope | What it does |
 |---|---|---|---|
-| `BeforeFeature("integration")` | `@integration` only | Feature | Calls `IntegrationTestSettings.Load()`, stores in `FeatureContext` |
-| `BeforeScenario` | All | Scenario | Resolves base URL; creates `HttpClient { BaseAddress }` |
+| `BeforeFeature` | All (no tag) | Feature | Calls `IntegrationTestSettings.Load()`, stores in `FeatureContext` |
+| `BeforeScenario` | All (no tag) | Scenario | Reads loaded settings; creates `HttpClient { BaseAddress }` |
 | `AfterScenario` | All | Scenario | Disposes `HttpClient` |
 
-`@smoke` scenarios do not trigger `BeforeFeature("integration")` — they use the host URL from runsettings or environment (e.g. `FUNCTIONS_HOST_URL`).
+**One path for all features.** `@smoke` and `@integration` are handled identically — both load settings in `BeforeFeature` and build the `HttpClient` in `BeforeScenario`. Do not branch the hooks per tag; the tags only drive which features run per environment (via the runsettings `TestCaseFilter`). The host URL always resolves the same way (env var → local file → committed default).
 
 ---
 

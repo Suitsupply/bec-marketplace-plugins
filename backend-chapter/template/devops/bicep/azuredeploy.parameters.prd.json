@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "env": {
+            "value": "prd"
+        },
+        "functionAppName": {
+            "value": "template-prd-af"
+        },
+        "managedIdentityName": {
+            "value": "template-prd-af-id"
+        },
+        "appServicePlanName": {
+            "value": "template-prd-af-asp"
+        },
+        "appInsightsName": {
+            "value": "template-prd-ai"
+        },
+        "logAnalyticsWorkspaceId": {
+            "value": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/example-prd-rg/providers/Microsoft.OperationalInsights/workspaces/example-prd-log"
+        },
+        "contributorPrincipalIds": {
+            "value": [
+                "52f67750-7b24-45bd-bed3-0deba25fd399"
+            ]
+        },
+        "teamNameTag": {
+            "value": "templateteam"
+        },
+        "teamKeyVault": {
+            "value": "template-prd-kv"
+        },
+        "storageAccountName": {
+            "value": "templateprdsa"
+        },
+        "serviceBusNamespaceName": {
+            "value": "placeholder-bus"
+        },
+        "swapiBaseUrl": {
+            "value": "https://swapi.info/api/"
+        }
+    }
+}

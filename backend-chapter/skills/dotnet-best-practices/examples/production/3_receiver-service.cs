@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using {ServiceName}.App.Clients.Interfaces;
 using {ServiceName}.App.Models.Foo.Models.Webhooks;
-using {ServiceName}.App.Services.Receivers.Interfaces;
+using {ServiceName}.App.Services.Foo.Interfaces;
 
-namespace {ServiceName}.App.Services.Receivers;
+namespace {ServiceName}.App.Services.Foo;
 
 public class FooReceiverService(
     ILogger<FooReceiverService> logger,

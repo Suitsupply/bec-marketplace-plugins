@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Suitsupply B.V.</Authors>
+    <Company>Suitsupply B.V.</Company>
+    <Product>Template</Product>
+    <Description>Integration tests for the Template chapter example.</Description>
+    <Copyright>Copyright © Suitsupply B.V. 2026</Copyright>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageReference Include="NUnit" Version="4.6.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
+    <PackageReference Include="Reqnroll.NUnit" Version="3.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Committed localhost defaults, used by default when running in Visual Studio. -->
+    <None Update="integrationtests.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Personal overrides/secrets (gitignored); copied only when present. -->
+    <None Update="integrationtests.local.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

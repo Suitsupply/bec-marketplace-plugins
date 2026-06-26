@@ -12,8 +12,8 @@
 
 | Signal | Pattern |
 |--------|---------|
-| HTTP webhook ingest | Azure Functions `Functions/Receivers/` |
-| Async queue processing | `Functions/Processors/` + `IServiceBusRetryScheduler` |
+| HTTP webhook ingest | Azure Functions `Functions/{Resource}/` (e.g. `Order/OrderCreatedReceiver.cs`) |
+| Async queue processing | `Functions/{Resource}/` + `IServiceBusRetryScheduler` |
 | Fetch related data before publish | `App/Enrichment/` pipelines + steps |
 | Outbound event shape translation | `Infra/Clients/{Publisher}/Mappers/` after enrichment |
 | Inbound event models | `App.Models/{Source}/Models/Webhooks/` |
@@ -26,7 +26,7 @@ If the service has none of the above, skip this document.
 
 `ReceiverServiceBase<T>` template method: backup to blob → forward to Service Bus. Api deserializes HTTP JSON → maps to domain before calling App. Subclass supplies event type, message id, blob path, tags.
 
-See `shopifyintegration`: `App/Services/Receivers/ReceiverServiceBase.cs`, `OrderCreatedReceiverService.cs`.
+See `shopifyintegration`: `App/Services/Order/ReceiverServiceBase.cs`, `OrderCreatedReceiverService.cs` (legacy services may still use `Receivers/` until migrated).
 
 Marker interfaces: `IReceiverService`, `IFooReceiverService : IReceiverService`.
 

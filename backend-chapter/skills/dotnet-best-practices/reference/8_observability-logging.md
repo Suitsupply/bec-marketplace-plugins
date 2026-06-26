@@ -26,33 +26,33 @@ Prefix strings (`Receiver -`, `Processor -`, `{EventType}`) are **ShopifyIntegra
 **HTTP triggers** usually cannot log `{OrderId}` until App deserializes the body. **Queue triggers** log `{MessageId}` at the Function; App logs business ids after parse.
 
 ```csharp
-// Api/Functions/Receivers/FooReceiver.cs — before body read
+// Api/Functions/Person/FooReceiver.cs — before body read
 logger.LogInformation("{Function} invoked.", nameof(FooReceiver));
 
 try
 {
-    var rawJson = await request.Body.ReadStreamAsString();
+    var rawJson = await request.Body.ReadStreamAsStringAsync();
     var requestDto = JsonSerializer.Deserialize<FooCreatedRequest>(rawJson);
     ArgumentNullException.ThrowIfNull(requestDto);
 
-    var domain = fooWebhookMapper.ToDomain(requestDto);
+    var domain = FooMapper.ToDomain(requestDto);
     await fooCreatedReceiverService.ProcessAsync(domain, cancellationToken);
     return new AcceptedResult();
 }
 catch (Exception ex)
 {
     logger.LogError(ex, "{Function} failed.", nameof(FooReceiver));
-    return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
+    return new ObjectResult("An unexpected error occurred while processing the request.") { StatusCode = StatusCodes.Status500InternalServerError };
 }
 ```
 
 ```csharp
-// App/Services/Processors/FooProcessorService.cs — domain passed from Api
+// App/Services/PersonServices.cs — domain passed from Api
 logger.LogInformation("Processing foo created for order {OrderId} ({OrderName}).", message.Id, message.Name);
 ```
 
 ```csharp
-// Api/Functions/Processors/FooProcessor.cs — Service Bus
+// Api/Functions/Person/FooProcessor.cs — Service Bus
 logger.LogInformation("{Function} message {MessageId} received.", nameof(FooProcessor), message.MessageId);
 ```
 

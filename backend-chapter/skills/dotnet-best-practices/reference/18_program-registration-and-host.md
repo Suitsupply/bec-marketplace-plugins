@@ -12,7 +12,9 @@
 |----------|----------------|
 | `AddSingleton` | Azure SDK clients (`BlobServiceClient`, `ServiceBusClient`), Infra typed wrappers, outbound publishers |
 | `AddScoped` | App domain services (typical default) |
-| `AddTransient` | Api/Infra mappers, enrichment steps, validators |
+| `AddTransient` | Enrichment steps, validators, lightweight stateless helpers |
+
+> Boundary mappers are `static class`es — **not registered**. Call them directly. Only register a mapper (`AddTransient`) when it needs injected collaborators — see [17_models-and-mappers.md](17_models-and-mappers.md).
 
 Register App services in `Program.ConfigureServices`; Infra wiring in `AddInfrastructure`.
 

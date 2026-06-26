@@ -6,7 +6,7 @@ public static class FooServiceTests
 {
     public abstract class FooServiceTestsBase
     {
-        protected readonly FooService Sut = new(Mock.Of<IFooDependency>().Object);
+        protected readonly FooService Sut = new(new Mock<IFooDependency>().Object);
     }
 
     // Verifies all public method parameters are null-guarded via ArgumentsNullChecker.
@@ -15,7 +15,22 @@ public static class FooServiceTests
         [Test]
         public void ShouldEnforceNullChecksOnMethods()
         {
+            // Act & Assert
             ArgumentsNullChecker.CheckMethodParameters(Sut);
+        }
+    }
+}
+
+// Static class (e.g. a mapper): pass the type — there is no instance, so no base class is needed.
+public static class FooMapperTests
+{
+    public class NullArgumentChecks
+    {
+        [Test]
+        public void ShouldEnforceNullChecksOnMethods()
+        {
+            // Act & Assert
+            ArgumentsNullChecker.CheckStaticMethodParameters(typeof(FooMapper));
         }
     }
 }

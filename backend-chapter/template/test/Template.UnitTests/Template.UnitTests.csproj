@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildProjectDirectory)/TestResults/</CoverletOutput>
+    <ExcludeByAttribute>GeneratedCodeAttribute</ExcludeByAttribute>
+    <ExcludeByFile>**/Program.cs</ExcludeByFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Suitsupply B.V.</Authors>
+    <Company>Suitsupply B.V.</Company>
+    <Product>Template</Product>
+    <Description>Unit tests for the Template chapter example.</Description>
+    <Copyright>Copyright � Suitsupply B.V. 2026</Copyright>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoFixture" Version="4.18.1" />
+    <PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1" />
+    <PackageReference Include="AutoFixture.NUnit4" Version="4.19.0" />
+    <PackageReference Include="coverlet.msbuild" Version="10.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="NUnit" Version="4.6.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="AutoFixture" />
+    <Using Include="AutoFixture.AutoMoq" />
+    <Using Include="AutoFixture.NUnit4" />
+    <Using Include="Moq" />
+    <Using Include="NUnit.Framework" />
+    <Using Include="Template.UnitTests.Helpers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Template.Api\Template.Api.csproj" />
+    <ProjectReference Include="..\..\src\Template.Api.Models\Template.Api.Models.csproj" />
+    <ProjectReference Include="..\..\src\Template.App\Template.App.csproj" />
+    <ProjectReference Include="..\..\src\Template.App.Models\Template.App.Models.csproj" />
+    <ProjectReference Include="..\..\src\Template.Infra\Template.Infra.csproj" />
+  </ItemGroup>
+
+</Project>

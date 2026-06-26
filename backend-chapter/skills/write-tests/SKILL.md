@@ -19,7 +19,7 @@ Hub skill for Backend Chapter test strategy. Works on Cursor and Claude Code.
         ├─────────────┤
         │  Component  │  Some — in-process, Infra mocked
         ├─────────────┤
-        │    Unit     │  Many — isolated classes; mock services/clients; real mappers
+        │    Unit     │  Many — isolated classes; mock services/clients; static mappers
         └─────────────┘
 ```
 
@@ -31,7 +31,7 @@ Hub skill for Backend Chapter test strategy. Works on Cursor and Claude Code.
 
 | Tier | Project | What it proves | When to add |
 |------|---------|----------------|-------------|
-| **Unit** | `test/{ServiceName}.UnitTests/` | Single class logic with mocked services and client interfaces; **real mapper instances**; exercise branching and edge cases | Default for all testable App logic — aim for close to **100%** line and branch coverage (excludes wiring, DI, Infra clients) |
+| **Unit** | `test/{ServiceName}.UnitTests/` | Single class logic with mocked services and client interfaces; **static mappers called directly**; exercise branching and edge cases | Default for all testable App logic — aim for close to **100%** line and branch coverage (excludes wiring, DI, Infra clients) |
 | **Component** | `test/{ServiceName}.ComponentTests/` | HTTP/Service Bus function in-process end-to-end; Infra fully mocked (blob, queue, **HTTP clients**, publishers) | Default for new Azure Function flows |
 | **Integration** | `test/{ServiceName}.IntegrationTests/` | Live deployed host; real blob/HTTP side effects | **TST:** `@smoke` + at least one `@integration` per functional flow/feature; **PRD:** `@smoke` only |
 
@@ -48,11 +48,11 @@ Apply **analyze-test-suite** when assessing suite health or planning coverage fo
 
 ## Shared conventions
 
-- **NUnit 3** for all test projects
+- **NUnit 4** for all test projects (latest stable)
 - **Reqnroll 3.3.4** (`Reqnroll.NUnit`) for component and integration tests
-- **Moq** + **AutoFixture** in unit and component tests; **no Moq** in integration tests
-- **coverlet** for unit/component coverage (`CollectCoverage=true`)
-- Standard `PropertyGroup` blocks on every test `.csproj` — see **dotnet-best-practices** [reference/5_csproj.md](../dotnet-best-practices/reference/5_csproj.md) (`IsPackable` false; coverlet on unit/component)
+- **Moq** + **AutoFixture** in unit and component tests; **`AutoFixture.NUnit4` `[AutoData]` is unit-tier only** (component tests reference `AutoFixture` but do not use `[AutoData]`); **no Moq** in integration tests
+- **coverlet** for **unit** coverage only (`CollectCoverage=true`) — component and integration tests do not collect coverage
+- Standard `PropertyGroup` blocks on every test `.csproj` — see **dotnet-best-practices** [reference/5_csproj.md](../dotnet-best-practices/reference/5_csproj.md) (`IsPackable` false; coverlet on unit tests only)
 
 ### Project layout (by tier)
 
@@ -74,6 +74,6 @@ After writing production code (**dotnet-best-practices** references 12–18), ap
 
 ## Sub-skills
 
-- **write-unit-tests** — NUnit, base/derived classes, `FixtureFactory`, `ArgumentsNullChecker`, real mappers
+- **write-unit-tests** — NUnit, base/derived classes, `FixtureFactory`, `ArgumentsNullChecker`, static mappers
 - **write-component-tests** — Reqnroll, `ApplicationFactory`, feature file naming
 - **write-integration-tests** — `@smoke` / `@integration`, runsettings, side-effect polling

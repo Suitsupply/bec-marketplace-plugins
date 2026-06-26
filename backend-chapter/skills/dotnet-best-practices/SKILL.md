@@ -39,6 +39,7 @@ Hub skill for Backend Chapter C# development. Works on Cursor and Claude Code.
 | 16 | Enrichment / outbound mapping (optional) | [16_enrichment-and-mappers.md](reference/16_enrichment-and-mappers.md) |
 | 17 | Models and Api mappers template | [17_models-and-mappers.md](reference/17_models-and-mappers.md) |
 | 18 | `Program.cs` / host bootstrap | [18_program-registration-and-host.md](reference/18_program-registration-and-host.md) |
+| 19 | Service Bus retry / dead-letter scheduler | [19_servicebus-retry-scheduler.md](reference/19_servicebus-retry-scheduler.md) |
 | — | ServiceInfo / shared Api packages | [Chapter common packages](#chapter-common-packages) |
 | — | Production `.cs` examples | [examples/production/](examples/production/) |
 | — | Write tests (unspecified tier) | `write-tests` |
@@ -71,6 +72,7 @@ Repo-specific `.cursor/skills/` in a project extend these chapter skills. On con
 | 16 | [16_enrichment-and-mappers.md](reference/16_enrichment-and-mappers.md) | Optional enrichment; Infra outbound mapping |
 | 17 | [17_models-and-mappers.md](reference/17_models-and-mappers.md) | Model records; Api mapper template |
 | 18 | [18_program-registration-and-host.md](reference/18_program-registration-and-host.md) | `Program.cs` bootstrap, DI lifetimes, Web App host |
+| 19 | [19_servicebus-retry-scheduler.md](reference/19_servicebus-retry-scheduler.md) | Service Bus delayed retry + dead-letter scheduler |
 
 ## Examples
 
@@ -254,6 +256,10 @@ services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 
 `ServiceSettings` validator and fail-early pattern: [Configuration validation (fail early)](#configuration-validation-fail-early), [12_configuration-validation.md](reference/12_configuration-validation.md).
 
+### Service Bus retry scheduler (planned shared package)
+
+`IServiceBusRetryScheduler` / `ServiceBusRetryScheduler` (delayed retry + dead-letter for Service Bus processors) is generic, service-agnostic plumbing intended to graduate into a **shared chapter package**. Until it is published, services copy the reference implementation into `Api/Messaging/` and mark it with `// TODO: move to shared chapter package` — do not fork the behaviour per service. Full template: [19_servicebus-retry-scheduler.md](reference/19_servicebus-retry-scheduler.md).
+
 ---
 
 ## 2. Naming conventions
@@ -261,11 +267,11 @@ services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 | Element | Convention | Example |
 |---------|------------|---------|
 | Projects | `{ServiceName}.{Layer}` PascalCase | `OrderSync.App` |
-| Namespaces | Mirror folder path | `OrderSync.App.Services.Processors` |
+| Namespaces | Mirror folder path | `OrderSync.App.Services.Order` |
 | Interfaces | `I` prefix; file in **`Interfaces/`** subfolder | `App/Clients/Interfaces/IOrderHistoryClient.cs` |
 | Downstream clients | `I{Name}Client` or `I{Name}Publisher` | `IOrderHistoryClient`, `IOutboundEventPublisher` |
 | Services | `{Feature}{Role}Service` | `FooReceiverService`, `FooProcessorService` |
-| Azure Functions | `{Feature}{Role}` | `FooReceiver`, `FooProcessor` |
+| Azure Functions | `{Feature}{Action}Function` | `GetPersonFunction`, `UpdatePersonFunction`, `CreateVehicleFunction` |
 | Async methods | `Async` suffix | `ProcessAsync` |
 | Methods | Name describes behaviour — reader should not need to open the body | `PublishOutboundEventAsync`, not `Handle` |
 | Constants | PascalCase static class | `ServiceBusConstants` |
@@ -274,6 +280,8 @@ services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 | Test method | `Should{Outcome}_When{Condition}` | `ShouldReturnAccepted_WhenPayloadValid` |
 | Positional records | One parameter per line | [17_models-and-mappers.md](reference/17_models-and-mappers.md) |
 | API versioning | In **folders/namespaces** only — never in type names | `Api/Mappers/v1/FooWebhookMapper.cs`, not `FooWebhookMapperV1` |
+
+**Type-name suffixes:** every class carries a suffix denoting its kind — `Function`, `Service`, `Mapper`, `Validator`, `Settings` / `Options`, `Client`, `Publisher`, `Decorator`, `Extensions`, `Tests`. Never ship a bare role name (`FooReceiver`) — add the type suffix (`FooReceiverFunction`).
 
 **Downstream client layout:** interfaces in `App/Clients/Interfaces/`; implementations in `Infra/Clients/{Name}/`. **One client per downstream component** — never merge unrelated external systems into a single `I*` client. See [4_downstream-clients.md](reference/4_downstream-clients.md).
 
@@ -360,7 +368,7 @@ Examples: [3_nullability.md](examples/3_nullability.md).
 |----------|---------|
 | **Singleton** | Thread-safe stateless services, Azure SDK clients, typed HTTP clients (one typed client per downstream) |
 | **Scoped** | Per-request / per-function-invocation (receiver/processor services) |
-| **Transient** | Mappers, enrichment steps, validators, lightweight stateless helpers |
+| **Transient** | Enrichment steps, validators, lightweight stateless helpers (mappers are `static` — not registered unless they need injected deps) |
 
 - Constructor injection only — primary constructors in C# 12.
 - **No service locator** — ban `IServiceProvider.GetService` in business code.
@@ -469,7 +477,7 @@ Use chapter conventions and well-known patterns **by default** — do not reinve
 | **Template Method** | Shared algorithm + hooks in `abstract` base | [3_template-method-pattern.cs](reference/patterns/3_template-method-pattern.cs) |
 | **Strategy / Handler** | One handler per scenario + factory | [2_strategy-pattern.cs](reference/patterns/2_strategy-pattern.cs) |
 | **Factory** | `I*Factory` resolves variant handlers/clients | [1_factory-pattern.cs](reference/patterns/1_factory-pattern.cs) |
-| **Decorator** | Cross-cutting logging/metrics via `Decorate<>` | [4_decorator-pattern.cs](reference/patterns/4_decorator-pattern.cs) |
+| **Decorator** | Cross-cutting logging / metrics / **caching** via `Decorate<>` | [4_decorator-pattern.cs](reference/patterns/4_decorator-pattern.cs) |
 | **Pipeline** | Multi-step flow with discrete steps (integration services) | [14_integration-service-patterns.md](reference/14_integration-service-patterns.md) |
 | **Mapper** | Api/Infra shape translation only — **no business logic**; **not** in App | [17_models-and-mappers.md](reference/17_models-and-mappers.md), [2_layer-boundaries.md](reference/2_layer-boundaries.md) |
 | **Options + validation** | `IOptions<T>` + FluentValidation fail-early | [12_configuration-validation.md](reference/12_configuration-validation.md) |
@@ -615,7 +623,7 @@ Every `src/` and `test/` `.csproj` includes three `PropertyGroup` blocks **befor
 
 **Azure Functions Api** adds to group 1: `AzureFunctionsVersion` v4, `OutputType` Exe.
 
-**Test projects** add `IsPackable` false to group 1. Unit and component tests add a coverlet `PropertyGroup`.
+**Test projects** add `IsPackable` false to group 1. **Unit tests** add a coverlet `PropertyGroup`; component and integration tests do **not** collect coverage.
 
 **Api.Models** adds `PackageId` in the metadata group for NuGet publish.
 

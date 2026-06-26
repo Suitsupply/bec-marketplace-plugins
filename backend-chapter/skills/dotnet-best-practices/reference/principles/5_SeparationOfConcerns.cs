@@ -19,13 +19,13 @@ public sealed class FooReceiver(IFooService service)
         service.ProcessAsync(req.Body.ReadAsString(), ct);  // App sees transport, not domain
 }
 
-// ✓ CORRECT — Api converts DTO → domain at boundary
-public sealed class FooReceiver(IFooService service, IFooWebhookMapper mapper)
+// ✓ CORRECT — Api converts DTO → domain at boundary (static mapper, no injection)
+public sealed class FooReceiver(IFooService service)
 {
     public async Task Run(HttpRequest req, CancellationToken ct)
     {
         var dto = await req.ReadFromJsonAsync<FooCreatedRequest>(ct);
-        await service.ProcessAsync(mapper.ToDomain(dto!), ct);
+        await service.ProcessAsync(FooMapper.ToDomain(dto!), ct);
     }
 }
 

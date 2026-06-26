@@ -35,7 +35,7 @@ Webhook / inbound event domain shapes: `App.Models/{Feature}/Models/Webhooks/` �
 
 ## `Api.Models` — HTTP transport contracts
 
-Positional `record` in `{Feature}/Transport/Requests|Responses|Models/`; use `[property: JsonPropertyName("…")]` when JSON names differ from property names.
+Positional `record` in `v1/{Feature}/Requests|Responses|Models/`; use `[property: JsonPropertyName("…")]` when JSON names differ from property names.
 
 ```csharp
 public record FooCreatedRequest(
@@ -86,23 +86,15 @@ public record ShippingChargeResult(decimal Amount, string TaxCode);
 
 ## Api mapper template
 
-Interface and implementation live under `Api/Mappers/v1/` (or unversioned `Api/Mappers/` when the host has a single API surface). **Do not** encode the API version in the type name.
+Boundary mappers are **pure, stateless, dependency-free** transformations — so make them a **`static class` with `static` methods**. No interface, no DI registration; call them directly (`FooMapper.ToDomain(request)`). Mappers live under `Api/Mappers/v1/` (or unversioned `Api/Mappers/` when the host has a single API surface). **Do not** encode the API version in the type name.
 
 ```csharp
-// Api/Mappers/v1/Interfaces/IFooWebhookMapper.cs
-namespace {ServiceName}.Api.Mappers.v1.Interfaces;
-
-public interface IFooWebhookMapper
-{
-    FooCreatedWebhook ToDomain(FooCreatedRequest request);
-}
-
-// Api/Mappers/v1/FooWebhookMapper.cs
+// Api/Mappers/v1/FooMapper.cs
 namespace {ServiceName}.Api.Mappers.v1;
 
-public sealed class FooWebhookMapper : IFooWebhookMapper
+public static class FooMapper
 {
-    public FooCreatedWebhook ToDomain(FooCreatedRequest request)
+    public static FooCreatedWebhook ToDomain(FooCreatedRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -110,26 +102,8 @@ public sealed class FooWebhookMapper : IFooWebhookMapper
             Id: request.Id,
             Name: request.Name);
     }
-}
-```
 
-Query/response mappers follow the same pattern — version in folder, not in class name:
-
-```csharp
-// Api/Mappers/Interfaces/IGetFooMapper.cs
-namespace {ServiceName}.Api.Mappers.Interfaces;
-
-public interface IGetFooMapper
-{
-    GetFooResponse Map(Foo domain);
-}
-
-// Api/Mappers/GetFooMapper.cs
-namespace {ServiceName}.Api.Mappers;
-
-public sealed class GetFooMapper : IGetFooMapper
-{
-    public GetFooResponse Map(Foo domain)
+    public static GetFooResponse ToDto(Foo domain)
     {
         ArgumentNullException.ThrowIfNull(domain);
 
@@ -140,12 +114,14 @@ public sealed class GetFooMapper : IGetFooMapper
 }
 ```
 
+**When to use an interface + instance instead:** only when a mapper genuinely needs injected collaborators (rare for a boundary mapper — e.g. a clock or a lookup service). Then make it an instance `sealed class` implementing an `I*` contract in `…/Interfaces/` and register it (`AddTransient`). Default to `static`.
+
 **Rules:**
 
-- Interface in `…/Interfaces/`; implementation in parent folder
+- `static class` + `static` methods by default — no interface, no DI registration; only inject when the mapper has real dependencies
 - App service returns domain; Api maps to `Api.Models` before HTTP response
-- Return `null` when required input is missing (caller decides early exit)
+- Throw `ArgumentNullException` on null input — mappers translate shape, they don't decide flow
 - One mapper, one output shape (SRP)
 - Blank line before the method's final `return`
-- Pure structural shared mapping → `abstract` base — not for business rules
+- Pure structural shared mapping → shared `static` helper — not for business rules
 - Pure model logic → `{Type}Extensions` — not `*Helper` classes

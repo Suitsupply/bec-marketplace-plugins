@@ -81,7 +81,7 @@ public async Task<string> PublishAsync(PublishContext context, CancellationToken
 ## Outbound mapping (Infra)
 
 - Location: `Infra/Clients/{Publisher}/Mappers/` (or inline in the client when trivial)
-- Interface in `Mappers/Interfaces/` when extracted; implementation in parent `Mappers/` folder
+- `static class` by default (stateless, dependency-free) — call it directly, no interface, no DI registration; add an `I*` contract in `Mappers/Interfaces/` only when the mapper needs injected collaborators
 - Input: domain model or enriched context from App — **never** raw inbound JSON
 - Output: wire/publish DTO in `Infra/Clients/{Publisher}/Models/`
 - **Not allowed in mapper:** HTTP/client calls, fetching missing data, business branching, classification, validation rules

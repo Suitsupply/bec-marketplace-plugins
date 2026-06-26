@@ -6,14 +6,14 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using {ServiceName}.Api.Mappers.v1.Interfaces;
-using {ServiceName}.Api.Models.Foo.Transport.Requests;
+using {ServiceName}.Api.Mappers.v1;
+using {ServiceName}.Api.Models.v1.Foo.Requests;
 using {ServiceName}.App.Extensions;
-using {ServiceName}.App.Services.Receivers.Interfaces;
+using {ServiceName}.App.Services.Foo.Interfaces;
 
-namespace {ServiceName}.Api.Functions.Receivers;
+namespace {ServiceName}.Api.Functions.Foo;
 
-public class FooReceiver(ILogger<FooReceiver> logger, IFooReceiverService fooReceiverService, IFooWebhookMapper fooWebhookMapper)
+public class FooReceiver(ILogger<FooReceiver> logger, IFooReceiverService fooReceiverService)
 {
     [Function(nameof(FooReceiver))]
     [OpenApiOperation(nameof(FooReceiver), "Foo Receivers")]
@@ -30,11 +30,11 @@ public class FooReceiver(ILogger<FooReceiver> logger, IFooReceiverService fooRec
 
         try
         {
-            var rawJson = await request.Body.ReadStreamAsString();
+            var rawJson = await request.Body.ReadStreamAsStringAsync();
             var requestDto = JsonSerializer.Deserialize<FooCreatedRequest>(rawJson);
             ArgumentNullException.ThrowIfNull(requestDto);
 
-            var domain = fooWebhookMapper.ToDomain(requestDto);
+            var domain = FooMapper.ToDomain(requestDto);
             await fooReceiverService.ProcessAsync(domain, cancellationToken);
 
             return new AcceptedResult();
@@ -42,7 +42,7 @@ public class FooReceiver(ILogger<FooReceiver> logger, IFooReceiverService fooRec
         catch (Exception ex)
         {
             logger.LogError(ex, "{Function} failed.", nameof(FooReceiver));
-            return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
+            return new ObjectResult("An unexpected error occurred while processing the request.") { StatusCode = StatusCodes.Status500InternalServerError };
         }
     }
 }

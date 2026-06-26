@@ -65,7 +65,7 @@ App service returns domain model (App.Models)
   → HTTP response
 ```
 
-Example: `GetOrderFunction` calls `IGetOrderService` (returns `Order` domain), then `IGetOrderMapper` maps `Order` → `GetOrderResponse` (Api.Models).
+Example: `GetOrderFunction` calls `IGetOrderService` (returns `Order` domain), then the static `GetOrderMapper.ToDto` maps `Order` → `GetOrderResponse` (Api.Models).
 
 ### Outbound call (App → Infra → external API)
 
@@ -117,7 +117,7 @@ App enrichment / service (domain only)
   Mappers/                    # Boundary mappers: domain ↔ Api.Models DTO
   Functions/                  # Deserialize/map inbound; call App with domain
 
-{ServiceName}.Api.Models/       # Public HTTP contracts: {Feature}/Transport/Requests/, Responses/, Models/
+{ServiceName}.Api.Models/       # Public HTTP contracts: v1/{Feature}/Requests/, Responses/, Models/
 
 {ServiceName}.App/
   Clients/
@@ -139,33 +139,33 @@ App enrichment / service (domain only)
 ## Api boundary example
 
 ```csharp
-// Api/Functions/Receivers/FooReceiver.cs
-public sealed class FooReceiver(IFooReceiverService service, IFooWebhookMapper webhookMapper)
+// Api/Functions/Person/FooReceiver.cs
+public sealed class FooReceiver(IFooReceiverService service)
 {
     public async Task<IActionResult> Run(HttpRequest request, CancellationToken cancellationToken)
     {
         var requestDto = await request.ReadFromJsonAsync<FooCreatedRequest>(cancellationToken);
         ArgumentNullException.ThrowIfNull(requestDto);
 
-        var domain = webhookMapper.ToDomain(requestDto);   // DTO → domain at Api boundary
+        var domain = FooMapper.ToDomain(requestDto);   // DTO → domain at Api boundary (static mapper)
         await service.ProcessAsync(domain, cancellationToken);
         return new AcceptedResult();
     }
 }
 
-// App/Services/Receivers/FooReceiverService.cs — domain only
+// App/Services/PersonServices.cs — domain only
 public Task ProcessAsync(FooCreatedWebhook domain, CancellationToken cancellationToken) { … }
 ```
 
 For Service Bus / queue processors, deserialize and map at the **processor Function** before calling App — same boundary rule as HTTP receivers.
 
 ```csharp
-// Api/Functions/Processors/FooProcessor.cs — Service Bus body → domain at Api boundary
+// Api/Functions/Person/FooProcessor.cs — Service Bus body → domain at Api boundary
 var domain = JsonSerializer.Deserialize<FooCreatedWebhook>(message.Body.ToString());
 ArgumentNullException.ThrowIfNull(domain);
 await processorService.ProcessAsync(domain, cancellationToken);
 
-// App/Services/Processors/FooProcessorService.cs — domain only
+// App/Services/PersonServices.cs — domain only
 public Task ProcessAsync(FooCreatedWebhook message, CancellationToken cancellationToken) { … }
 ```
 

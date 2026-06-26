@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using {ServiceName}.Api.Mappers.v1.Interfaces;
-using {ServiceName}.Api.Models.Foo.Transport.Requests;
+using {ServiceName}.Api.Mappers.v1;
+using {ServiceName}.Api.Models.v1.Foo.Requests;
 using {ServiceName}.App.Extensions;
 using {ServiceName}.App.Models.Foo.Models.Webhooks;
-using {ServiceName}.App.Services.Processors.Interfaces;
+using {ServiceName}.App.Services.Foo.Interfaces;
 
-namespace {ServiceName}.Api.Functions.Processors;
+namespace {ServiceName}.Api.Functions.Foo;
 
 // Queue listener — Service Bus processor. Retry/dead-letter via IServiceBusRetryScheduler (Api/Messaging/Interfaces/).
 // Entry log at Function: MessageId. Entry log with OrderId in App processor service (processor-service.cs).
@@ -18,7 +18,6 @@ namespace {ServiceName}.Api.Functions.Processors;
 public class FooProcessor(
     ILogger<FooProcessor> logger,
     IFooProcessorService processorService,
-    IFooWebhookMapper fooWebhookMapper,
     IServiceBusRetryScheduler retryScheduler,
     IOptions<ServiceBusOptions> serviceBusOptions)
 {
@@ -59,11 +58,11 @@ public class FooProcessor(
 
         try
         {
-            var rawJson = await request.Body.ReadStreamAsString();
+            var rawJson = await request.Body.ReadStreamAsStringAsync();
             var requestDto = JsonSerializer.Deserialize<FooCreatedRequest>(rawJson);
             ArgumentNullException.ThrowIfNull(requestDto);
 
-            var domain = fooWebhookMapper.ToDomain(requestDto);
+            var domain = FooMapper.ToDomain(requestDto);
             await processorService.ProcessAsync(domain, cancellationToken);
 
             return new AcceptedResult();
@@ -71,7 +70,7 @@ public class FooProcessor(
         catch (Exception ex)
         {
             logger.LogError(ex, "{Function} debug failed.", nameof(FooProcessor));
-            return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
+            return new ObjectResult("An unexpected error occurred while processing the request.") { StatusCode = StatusCodes.Status500InternalServerError };
         }
     }
 }

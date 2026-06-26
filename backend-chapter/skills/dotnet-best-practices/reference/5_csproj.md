@@ -66,7 +66,7 @@ Test projects may omit `PackageTags` when not publishing.
 | `{ServiceName}.Infra` | `Microsoft.NET.Sdk` | — | Tags e.g. `infrastructure;clients` |
 | `{ServiceName}.Api.Models` | `Microsoft.NET.Sdk` | — | Add `PackageId` (NuGet id) |
 | `*.UnitTests` | `Microsoft.NET.Sdk` | `IsPackable` false | Coverlet group below |
-| `*.ComponentTests` | `Microsoft.NET.Sdk` | `IsPackable` false | Coverlet group below |
+| `*.ComponentTests` | `Microsoft.NET.Sdk` | `IsPackable` false | No coverlet |
 | `*.IntegrationTests` | `Microsoft.NET.Sdk` | `IsPackable` false | No coverlet |
 
 **`{ServiceName}.App.Models`** — when the project contains only DTOs with no logic, add assembly-level exclusion (see **dotnet-best-practices** code coverage exclusions):
@@ -140,7 +140,9 @@ Add `PackageId` to the metadata group:
 
 ---
 
-## Unit / component test projects — coverlet
+## Unit test projects — coverlet
+
+> Only unit tests collect coverage. Component and integration tests prove behaviour end-to-end and do **not** add the coverlet group.
 
 After the deterministic group, add:
 
@@ -156,11 +158,29 @@ After the deterministic group, add:
 
 ---
 
+## Exposing internals to tests (`InternalsVisibleTo`)
+
+When a production type keeps members `internal` for encapsulation but still needs to be exercised by tests (e.g. an `internal const` key, an `internal static` cache-key helper on a decorator, or an `internal` method), grant the test assemblies access via `InternalsVisibleTo` on the **production** `.csproj` — do **not** widen the member to `public` just for testing.
+
+```xml
+<ItemGroup>
+  <InternalsVisibleTo Include="{ServiceName}.UnitTests" />
+  <InternalsVisibleTo Include="{ServiceName}.ComponentTests" />
+</ItemGroup>
+```
+
+- Add it to the project that owns the `internal` members (e.g. `{ServiceName}.Api`, `{ServiceName}.Infra`).
+- Only include the test assemblies that actually need it.
+- Prefer testing through the public surface first; use `InternalsVisibleTo` when an `internal` detail is genuinely worth asserting directly.
+
+---
+
 ## Checklist
 
 - [ ] All three shared `PropertyGroup` blocks present in every `src/` and `test/` `.csproj`
+- [ ] `InternalsVisibleTo` added to production projects whose `internal` members are tested (not widened to `public`)
 - [ ] Functions Api includes `AzureFunctionsVersion` v4 and `OutputType` Exe
 - [ ] `Product` matches solution/service name across all projects in the repo
 - [ ] `Description` is unique per project and describes that layer's role
 - [ ] `Api.Models` has `PackageId` when the package is published
-- [ ] Test projects set `IsPackable` false; unit/component include coverlet group
+- [ ] Test projects set `IsPackable` false; **only unit tests** include the coverlet group

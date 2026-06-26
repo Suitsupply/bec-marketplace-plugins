@@ -1,0 +1,43 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".cursorignore" />
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/devops/" />
+  <Folder Name="/Solution Items/devops/azurepipelines/">
+    <File Path="devops/azurepipelines/azure-pipeline.yaml" />
+  </Folder>
+  <Folder Name="/Solution Items/devops/bicep/">
+    <File Path="devops/bicep/azuredeploy.bicep" />
+    <File Path="devops/bicep/azuredeploy.json" />
+    <File Path="devops/bicep/azuredeploy.parameters.prd.json" />
+    <File Path="devops/bicep/azuredeploy.parameters.tst.json" />
+  </Folder>
+  <Folder Name="/Solution Items/devops/bicep/resources/">
+    <File Path="devops/bicep/resources/appinsights.bicep" />
+    <File Path="devops/bicep/resources/functionapp.bicep" />
+    <File Path="devops/bicep/resources/functionappsettings.bicep" />
+    <File Path="devops/bicep/resources/hostingplan.bicep" />
+    <File Path="devops/bicep/resources/storageaccount.bicep" />
+    <File Path="devops/bicep/resources/userassignedidentity.bicep" />
+  </Folder>
+  <Folder Name="/Solution Items/docs/">
+    <File Path="docs/00-readme.md" />
+    <File Path="docs/01-technical-overview.md" />
+    <File Path="docs/02-example-feature.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Template.Api.Models/Template.Api.Models.csproj" />
+    <Project Path="src/Template.Api/Template.Api.csproj" />
+    <Project Path="src/Template.App.Models/Template.App.Models.csproj" />
+    <Project Path="src/Template.App/Template.App.csproj" />
+    <Project Path="src/Template.Infra/Template.Infra.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Template.ComponentTests/Template.ComponentTests.csproj" />
+    <Project Path="test/Template.IntegrationTests/Template.IntegrationTests.csproj" />
+    <Project Path="test/Template.UnitTests/Template.UnitTests.csproj" />
+  </Folder>
+</Solution>

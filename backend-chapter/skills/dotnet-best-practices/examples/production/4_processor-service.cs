@@ -3,9 +3,9 @@ using {ServiceName}.App.Clients.Interfaces;
 using {ServiceName}.App.Enrichment;
 using {ServiceName}.App.Models.Enrichment;
 using {ServiceName}.App.Models.Foo.Models.Webhooks;
-using {ServiceName}.App.Services.Processors.Interfaces;
+using {ServiceName}.App.Services.Foo.Interfaces;
 
-namespace {ServiceName}.App.Services.Processors;
+namespace {ServiceName}.App.Services.Foo;
 
 public class FooProcessorService(
     ILogger<FooProcessorService> logger,

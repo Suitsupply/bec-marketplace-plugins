@@ -45,9 +45,38 @@ public sealed class BulkReplayServiceLoggingDecorator(IBulkReplayService inner, 
     }
 }
 
+// 4. Caching decorator — an infrastructure concern layered onto an App service interface.
+//    Lives in Infra (Infra/.../Decorators/), decorates an App I*Service, and reads a validated
+//    IOptions<CacheSettings> (FluentValidation + ValidateOnStart — see 12_configuration-validation.md).
+//    Registration (Program.cs): register the concrete App service first, then decorate.
+//
+//    services.AddScoped<IPersonsService, PersonsService>();
+//    services.Decorate<IPersonsService, PersonsServiceCachingDecorator>();
+
+public sealed class PersonsServiceCachingDecorator(IPersonsService inner, IMemoryCache cache, IOptions<CacheSettings> cacheSettings)
+    : IPersonsService
+{
+    internal static string PersonKey(int id) => $"example:person:{id}";
+
+    public Task<Person?> GetPersonAsync(int id, CancellationToken cancellationToken = default) =>
+        cache.GetOrCreateAsync(
+            PersonKey(id),
+            async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = cacheSettings.Value.PersonEntryLifetime;
+                return await inner.GetPersonAsync(id, cancellationToken);
+            });
+
+    // Write paths delegate straight through — only reads are cached.
+    public Task<Person?> UpdatePersonAsync(UpdatePerson message, CancellationToken cancellationToken = default) =>
+        inner.UpdatePersonAsync(message, cancellationToken);
+}
+
 // Guidelines:
 // - Decorator implements the SAME interface as inner service
 // - Inject inner as constructor parameter (composition)
 // - Use for logging, timing, caching, PII sanitization — not core business rules
+// - Caching decorators belong in Infra (caching is infrastructure), decorate an App I*Service,
+//   and drive expiry from a validated IOptions<CacheSettings>; only cache reads, delegate writes
 // - Prefer one decorator per concern; chain multiple Decorate<> calls if needed
 // - Do not subclass StarWarsService to add logging — use decorator

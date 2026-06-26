@@ -12,7 +12,7 @@
 - Testing null-guard enforcement via `ArgumentsNullChecker`
 - Testing HTTP status code mapping in a thin function wrapper (inject **real** Api/Infra mappers — do not mock `I*Mapper`)
 
-**Do not** unit-test framework wiring, DI registration, or **Infra client implementations** — cover those with component and integration tests. **Do not** mock mappers — use `new FooWebhookMapper()`; mapping edge cases belong in `{Mapper}Tests.cs`.
+**Do not** unit-test framework wiring, DI registration, or **Infra client implementations** — cover those with component and integration tests. **Do not** mock mappers — they are static classes, called directly (`FooMapper.ToDomain(...)`); mapping edge cases belong in `{Mapper}Tests.cs`.
 
 ## Component test when
 
@@ -29,7 +29,7 @@
 
 | Environment | Run | Coverage |
 |-------------|-----|----------|
-| **TST** (and ACC if used) | `@smoke` + `@integration` | At least one `@integration` feature per functional flow / feature |
+| **TST** | `@smoke` + `@integration` | At least one `@integration` feature per functional flow / feature |
 | **PRD** | `@smoke` only | Connectivity and auth enforcement — no real side-effect tests |
 
 Examples:
@@ -44,6 +44,6 @@ Examples:
 
 | Change | Unit | Component | Integration |
 |--------|------|-----------|-------------|
-| New receiver function | Status codes + null checks (real mapper) | Full POST → mock blob, SB, and HTTP clients | TST: one `@integration` flow; PRD: `@smoke` only |
+| New receiver function | Status codes + null checks (static mapper called directly) | Full POST → mock blob, SB, and HTTP clients | TST: one `@integration` flow; PRD: `@smoke` only |
 | New mapper with 10 edge cases | All edge cases | One happy-path scenario | No |
 | New flow / feature | Flow handler unit tests | File-driven + programmatic | TST: one `@integration` per flow; PRD: `@smoke` only |

@@ -36,10 +36,14 @@ Both layouts must still follow chapter rules: **`Interfaces/`** subfolders for c
 
 | You need… | Typical folders |
 |-----------|-----------------|
-| HTTP webhook or event ingest | `Api/Functions/Receivers/`, `App/Services/Receivers/` |
-| Async queue processing | `Api/Functions/Processors/`, `App/Services/Processors/`, optional `Api/Messaging/` |
+| HTTP webhook or event ingest | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
+| Async queue processing | `Api/Functions/{Resource}/`, `App/Services/{Resource}/`, optional `Api/Messaging/` |
 | Fetch related data before publish | `App/Enrichment/` |
-| HTTP read/query API | `Api/Functions/Queries/` or `Controllers/` — no receivers/processors |
+| HTTP read/query API | `Api/Functions/{Resource}/` or `Controllers/` |
+
+Group by **resource** (`PersonFunctions.cs`, `VehicleFunctions.cs`), not by trigger type. One class per resource holds all triggers; method names express the role (`GetAsync`, `Run`, `ProcessDebugAsync`).
+
+**Acceptable alternative — one class per trigger/role.** Within a resource folder you may instead split each trigger into its own class (`Functions/Persons/GetPersonFunction.cs`, `Functions/Persons/UpdatePersonFunction.cs`) when the triggers are unrelated or the per-resource class grows large. Keep them grouped under the resource folder/namespace and let the class name carry the role. Pick one style per service and apply it consistently.
 
 Example of the full webhook → queue → enrich → publish flow: [14_integration-service-patterns.md](14_integration-service-patterns.md). A query API or Web App CRUD service uses only the folders that apply to its flow.
 
@@ -56,15 +60,13 @@ Example of the full webhook → queue → enrich → publish flow: [14_integrati
 ├── local.settings.json             # Functions only (gitignored)
 ├── {ServiceName}.Api.csproj
 ├── Functions/                      # Azure Functions only — omit for Web App
-│   ├── Receivers/                  # HTTP triggers (when applicable)
-│   ├── Processors/                 # Service Bus triggers (when applicable)
-│   └── Queries/                    # HTTP read APIs (when applicable)
+│   ├── PersonFunctions.cs           # all triggers for one resource (GET, Service Bus, debug HTTP)
+│   ├── VehicleFunctions.cs
+│   └── …
 ├── Controllers/                    # Web App only — or feature subfolders
 ├── Mappers/
 │   └── v1/                         # API version in folder when needed — not in class names
-│       ├── FooWebhookMapper.cs
-│       └── Interfaces/
-│           └── IFooWebhookMapper.cs
+│       └── FooMapper.cs             # static class — no interface (unless it needs injected deps)
 └── Messaging/                      # Host-only infra (e.g. retry scheduler) — when applicable
     ├── Interfaces/
     ├── Settings/
@@ -82,14 +84,14 @@ Example of the full webhook → queue → enrich → publish flow: [14_integrati
 ```
 {ServiceName}.Api.Models/
 ├── {ServiceName}.Api.Models.csproj
-└── {Feature}/
-    └── Transport/
+└── v1/                               # API version sits at the top of Api.Models
+    └── {Feature}/
         ├── Models/                   # shared wire types referenced by requests/responses
         ├── Requests/
         └── Responses/
 ```
 
-API versioning (`v1`, `v2`, …) belongs in the **Api** project folder structure (`Controllers/v1/`, `Mappers/v1/`, `Validators/v1/Transport/`) — **not** in `Api.Models` paths and **not** in type names (no `FooMapperV1`, `GetOrderRequestV2`).
+API versioning (`v1`, `v2`, …) lives in the **folder structure** — both in the **Api** project (`Controllers/v1/`, `Mappers/v1/`, `Validators/v1/`) and at the top of **Api.Models** (`Api.Models/v1/{Feature}/…`) — but **never** in type names (no `FooMapperV1`, `GetOrderRequestV2`).
 
 ### `{ServiceName}.App` (horizontal)
 
@@ -100,8 +102,8 @@ API versioning (`v1`, `v2`, …) belongs in the **Api** project folder structure
 ├── Extensions/                     # {Type}Extensions — NOT *Helper classes
 └── Services/
     ├── Interfaces/
-    ├── {Feature}Service.cs
-    └── …                           # optional: Receivers/, Processors/, Queries/ subfolders
+    ├── PersonServices.cs             # services for one resource
+    └── …
 ```
 
 | Folder | Purpose |
@@ -110,7 +112,7 @@ API versioning (`v1`, `v2`, …) belongs in the **Api** project folder structure
 | `Services/` | Use cases and orchestration |
 | `Extensions/` | Pure logic on domain types |
 
-Add `Enrichment/` when the service enriches data before publishing. Add `Services/Receivers/` or `Services/Processors/` when the App layer has that role — see the table above. Query APIs and simple Web Apps often need neither. **No `App/Mappers/`** — shape translation lives in `Api/Mappers/` or `Infra/Clients/.../Mappers/`.
+Add `Enrichment/` when the service enriches data before publishing. **No `App/Mappers/`** — shape translation lives in `Api/Mappers/` or `Infra/Clients/.../Mappers/`.
 
 ### `{ServiceName}.App.Models`
 
@@ -157,12 +159,12 @@ Repo example: `fulfillmenttools` (`ItFfTools.*`).
 └── BulkReplay/
     ├── Controllers/v1/
     ├── Mappers/v1/
-    ├── Validators/v1/Transport/
+    ├── Validators/v1/
     └── SwaggerExamples/              # optional
 
 {ServiceName}.Api.Models/
-└── BulkReplay/
-    └── Transport/
+└── v1/
+    └── BulkReplay/
         ├── Requests/
         └── Responses/
 
@@ -207,21 +209,21 @@ File-scoped namespaces; folder path must match exactly (IDE0130).
 
 | Concern | Project / path |
 |---------|----------------|
-| HTTP entry (Functions) | `Api/Functions/` |
+| HTTP entry (Functions) | `Api/Functions/{Resource}/` |
 | HTTP entry (Web App) | `Api/Controllers/` or `Api/{Feature}/Controllers/` |
-| HTTP read/query (when applicable) | `Api/Functions/Queries/` or `Api/Controllers/` |
-| Webhook ingest (when applicable) | `Api/Functions/Receivers/`, `App/Services/Receivers/` |
-| Queue processor (when applicable) | `Api/Functions/Processors/`, `App/Services/Processors/` |
+| HTTP read/query (when applicable) | `Api/Functions/{Resource}/` or `Api/Controllers/` |
+| Webhook ingest (when applicable) | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
+| Queue processor (when applicable) | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
 | Pre-publish enrichment (when applicable) | `App/Enrichment/` |
 | Service Bus retry scheduler (when applicable) | `Api/Messaging/` |
-| Public API request DTO | `Api.Models/{Feature}/Transport/Requests/` |
-| Public API response DTO | `Api.Models/{Feature}/Transport/Responses/` |
+| Public API request DTO | `Api.Models/v1/{Feature}/Requests/` |
+| Public API response DTO | `Api.Models/v1/{Feature}/Responses/` |
 | Domain model | `App.Models/{Feature}/Models/` |
 | Business orchestration | `App/Services/` or `App/{Feature}/Services/` |
 | Client interface | `App/Clients/Interfaces/` (horizontal) or `App/{Feature}/Clients/Interfaces/` (vertical) |
 | Client implementation | `Infra/Clients/{Name}/` (horizontal) or `Infra/{Feature}/HttpClients/` (vertical) |
-| Api boundary mapper | `Api/Mappers/v1/Interfaces/` (or `Api/Mappers/Interfaces/` when unversioned) |
-| Infra boundary mapper | `Infra/Clients/{Name}/Mappers/` (or inline in client) |
+| Api boundary mapper | `Api/Mappers/v1/` (or `Api/Mappers/` when unversioned) — `static class`, no interface |
+| Infra boundary mapper | `Infra/Clients/{Name}/Mappers/` (or inline in client) — `static class` |
 | Settings + FluentValidation | `*/Settings/` + `*/Validators/` |
 | DI registration (infra) | `Infra/Extensions/ServiceCollectionExtensions.cs` |
 | DI registration (host) | `Api/Program.cs` |
@@ -243,11 +245,11 @@ test/
 
 | Project | Layout rule | Details |
 |---------|-------------|---------|
-| **UnitTests** | **Mirror `src/`** — same folder path and namespace under `test/{ServiceName}.UnitTests/` | `src/.../Api/Functions/Receivers/FooReceiver.cs` → `test/.../UnitTests/Api/Functions/Receivers/FooReceiverTests.cs` |
+| **UnitTests** | **Mirror `src/`** — same folder path and namespace under `test/{ServiceName}.UnitTests/` | `src/.../Api/Functions/PersonFunctions.cs` → `test/.../UnitTests/Api/Functions/PersonFunctionsTests.cs` |
 | **ComponentTests** | **Feature-oriented** — `Features/`, `StepDefinitions/`, `Support/`, `Scenarios/` | `WebApplicationFactory<Program>`; Infra fully mocked |
 | **IntegrationTests** | Same as component — **fewer scenarios**, live host | `@smoke` / `@integration` tags; `*.runsettings` per environment |
 
-All test projects use the chapter `.csproj` templates (`IsPackable` false; coverlet on unit/component). See [5_csproj.md](5_csproj.md).
+All test projects use the chapter `.csproj` templates (`IsPackable` false; coverlet on unit tests only). See [5_csproj.md](5_csproj.md).
 
 ### `{ServiceName}.UnitTests`
 
@@ -269,7 +271,7 @@ test/{ServiceName}.UnitTests/
         └── Mappers/
 ```
 
-Namespace: `{ServiceName}.UnitTests.<mirrored-path>` (e.g. `{ServiceName}.UnitTests.Api.Functions.Receivers`).
+Namespace: `{ServiceName}.UnitTests.<mirrored-path>` (e.g. `{ServiceName}.UnitTests.Api.Functions.Person`).
 
 Details: **write-unit-tests**.
 
@@ -277,11 +279,13 @@ Details: **write-unit-tests**.
 
 ```
 test/{ServiceName}.ComponentTests/
-├── Features/                         # Gherkin — grouped by concern / function
-│   ├── GetOrders/
-│   └── Webhooks/
-│       ├── Receivers/
-│       └── Processors/{Name}/
+├── Features/                         # Gherkin — grouped by resource / feature slice
+│   ├── Person/
+│   │   ├── GetPersonFlow.feature
+│   │   └── PersonRequested.feature
+│   └── Order/
+│       ├── OrderCreated.feature
+│       └── OrderCreated-Files.feature
 ├── StepDefinitions/                  # Shared [Binding] classes
 ├── Support/
 │   ├── ApplicationFactory.cs

@@ -24,7 +24,7 @@ Expected business outcomes (return `null`, early `return`, `Result<T>`) stay in 
 
 ### HTTP receivers / queries
 
-Catch at the Function, log, return `500` (do not leak stack traces in production):
+Catch at the Function, log the full exception, return `500` with a **generic** message — never return `ex.Message`, stack traces, or other internal details to the caller (they may leak secrets or implementation detail):
 
 ```csharp
 try
@@ -35,7 +35,7 @@ try
 catch (Exception ex)
 {
     logger.LogError(ex, "{Function} failed.", nameof(FooReceiver));
-    return new ObjectResult(new { error = ex.Message }) { StatusCode = 500 };
+    return new ObjectResult("An unexpected error occurred while processing the request.") { StatusCode = StatusCodes.Status500InternalServerError };
 }
 ```
 
@@ -118,3 +118,4 @@ catch (HttpRequestException ex)
 - [ ] Recoverable failures use a **specific** catch and a defined fallback — not a broad catch
 - [ ] Api `Functions/` have the outer `try/catch` with `LogError(ex, …)` for unrecoverable failures
 - [ ] Never swallow — log + rethrow, log + HTTP 500, or log + retry scheduler
+- [ ] HTTP `500` responses return a **generic** message — never `ex.Message`, stack traces, or internal details (those go to the log only)

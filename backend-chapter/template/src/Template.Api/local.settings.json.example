@@ -1,0 +1,22 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "ServiceSettings__ServiceName": "Template.Api",
+
+    "SwapiClientSettings__BaseUrl": "https://swapi.info/api/",
+
+    "CacheSettings__PersonEntryLifetime": "00:02:00",
+    "CacheSettings__VehicleEntryLifetime": "00:05:00",
+
+    "ServiceBusOptions__StoreServiceBus__UpdatePersonQueueName": "update-person",
+    "ServiceBusOptions__StoreServiceBus__FullyQualifiedNamespace": "your-namespace.servicebus.windows.net",
+    "ServiceBusOptions__StoreServiceBus": "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
+
+    "MessageRetryOptions__MaxDeliveryCount": "3",
+    "MessageRetryOptions__RetryDelay": "00:00:30",
+    "MessageRetryOptions__BackoffMultiplier": "1"
+  }
+}

@@ -1,4 +1,3 @@
-@integration
 Feature: Foo Created Processor (File-Driven)
   End-to-end component test using JSON fixtures under Scenarios/FooCreated/.
 

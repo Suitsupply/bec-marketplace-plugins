@@ -7,7 +7,7 @@
 // Api.Models — public HTTP request contract (wire DTO)
 using System.Text.Json.Serialization;
 
-namespace {ServiceName}.Api.Models.Order.Transport.Requests;
+namespace {ServiceName}.Api.Models.v1.Order.Requests;
 
 public record FooCreatedRequest(
     [property: JsonPropertyName("id")] string Id,
@@ -21,19 +21,13 @@ public record FooCreatedWebhook(
     string Name,
     DateTimeOffset ReceivedAt);
 
-// Api/Mappers — boundary conversion (no business logic); v1 in folder/namespace, not type name
-namespace {ServiceName}.Api.Mappers.v1.Interfaces;
-
-public interface IFooWebhookMapper
-{
-    FooCreatedWebhook ToDomain(FooCreatedRequest request);
-}
-
+// Api/Mappers — boundary conversion (no business logic); static class, no interface;
+// v1 in folder/namespace, not type name
 namespace {ServiceName}.Api.Mappers.v1;
 
-public sealed class FooWebhookMapper : IFooWebhookMapper
+public static class FooMapper
 {
-    public FooCreatedWebhook ToDomain(FooCreatedRequest request)
+    public static FooCreatedWebhook ToDomain(FooCreatedRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         return new FooCreatedWebhook(request.Id, request.Name, DateTimeOffset.UtcNow);
@@ -41,7 +35,7 @@ public sealed class FooWebhookMapper : IFooWebhookMapper
 }
 
 // Api Function — deserialize DTO, map to domain, call App
-// await service.ProcessAsync(webhookMapper.ToDomain(requestDto), cancellationToken);
+// await service.ProcessAsync(FooMapper.ToDomain(requestDto), cancellationToken);
 
 // App service — domain only; never sees Api.Models
 namespace {ServiceName}.App.Services.Receivers;

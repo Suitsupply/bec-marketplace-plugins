@@ -10,6 +10,8 @@ description: >-
 
 Component tests verify an Azure Function end-to-end in-process, with all infrastructure dependencies replaced by `Mock<>` objects — including blob storage, Service Bus, **downstream HTTP clients** (`I*Client` from `App/Clients/Interfaces/`), and outbound publishers. **Use real Api/Infra mappers** (same as unit tests) — only external I/O is mocked. See **write-tests** for the testing pyramid.
 
+> **Scope note — examples are demonstration-only.** The blob-storage / outbound-publisher / processor / file-driven-`Scenarios` / `ReceiverEndpoints` shapes below are drawn from one specific event-driven integration service (`shopifyintegration`) and are **illustrative**. They are **not** mandatory for every service. Mock and test **only the infrastructure your host actually has** — a simple query/CRUD service typically has just one or two `I*Client` mocks and a few GET/POST routes (no blob, no publisher, no file-driven fixtures). Apply the conventions (naming, `ApplicationFactory`, hooks, untagged features) to whatever subset you need.
+
 ## Examples
 
 | # | File | Topic |
@@ -30,33 +32,30 @@ All component tests live in `test/{ServiceName}.ComponentTests/`.
 
 ## Framework
 
-- **Test runner**: NUnit 3 via `Reqnroll.NUnit` 3.3.4
+- **Test runner**: NUnit 4 (latest stable) via `Reqnroll.NUnit` 3.3.4
 - **Mocking**: Moq 4
 - **Host**: `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory<Program>`)
 - **Global usings** already active: `Moq`, `NUnit.Framework` (no need to add `using` for these)
+- **No tags**: component feature files are **never** tagged with `@smoke` / `@integration` — those tags are integration-tier only (they drive the `.runsettings` `TestCaseFilter`, which component tests do not use)
 
 ---
 
 ## Project structure
 
-**Not a mirror of `src/`** — organize by functional flow (feature files, shared step definitions, JSON fixtures). See **write-tests** hub for layout comparison across tiers.
+**Not a mirror of `src/`** — organize by **resource** (and optional vertical slice, e.g. `Example/Person/`). See **write-tests** hub for layout comparison across tiers.
 
 ```
 test/{ServiceName}.ComponentTests/
 ├── Features/
-│   ├── Queries/                              # optional — GET / query endpoints
-│   │   ├── Get{Resource}Flow.feature
-│   │   └── Get{Resource}By{Key}Flow.feature
-│   └── Webhooks/
-│       ├── Receivers/
-│       │   ├── ReceiverEndpoints.feature              # grouped HTTP receivers
-│       │   └── {BackupReceiver}.feature               # Service Bus backup receiver (if any)
-│       └── Processors/
-│           └── {FlowName}/                            # e.g. FooCreated, BarUpdated
-│               ├── {FlowName}.feature                 # programmatic scenarios
-│               ├── {FlowName}-Files.feature           # file-driven scenarios
-│               ├── {FlowName}-ServiceBusFailures.feature
-│               └── {FlowName}-UnhappyFlow.feature     # optional
+│   ├── Example/                              # optional vertical slice name
+│   │   └── Person/
+│   │       ├── GetPersonFlow.feature
+│   │       └── PersonRequested.feature
+│   └── Order/                                # or at Features root when no slice
+│       ├── OrderCreated.feature
+│       ├── OrderCreated-Files.feature
+│       ├── OrderCreated-Receiver.feature     # Service Bus backup receiver (if any)
+│       └── ReceiverEndpoints.feature         # optional — grouped HTTP receivers for one resource
 ├── StepDefinitions/                   # shared [Binding] classes (not 1:1 with feature files)
 │   ├── ReceiverEndpointsStepDefinitions.cs
 │   ├── {FlowName}ProcessorFlowStepDefinitions.cs
@@ -81,17 +80,17 @@ Add folders only for flows that exist in the service — not every processor nee
 
 ## Step 1: Feature file naming convention
 
-Feature files live under `Features/` grouped by concern. The **file name** and **`Feature:` title** must describe the same Azure Function.
+Feature files live under `Features/{Resource}/` (or `Features/{Slice}/{Resource}/`). The **file name** and **`Feature:` title** must describe the same Azure Function.
 
 | Function type | Path | Feature file(s) | `Feature:` title |
 |---|---|---|---|
-| HTTP receivers (grouped) | `Webhooks/Receivers/` | `ReceiverEndpoints.feature` | `Receiver Endpoints` |
-| Service Bus receiver | `Webhooks/Receivers/` | `{Name}-Receiver.feature` | `{Name} Receiver` |
-| Processor (programmatic) | `Webhooks/Processors/{FlowName}/` | `{FlowName}.feature` | `{FlowName} Processor` |
-| Processor (file-driven) | `Webhooks/Processors/{FlowName}/` | `{FlowName}-Files.feature` | `{FlowName} Processor (File-Driven)` |
-| Processor (Service Bus failures) | `Webhooks/Processors/{FlowName}/` | `{FlowName}-ServiceBusFailures.feature` | `{FlowName} Processor Service Bus Failures` |
-| Processor (unhappy path) | `Webhooks/Processors/{FlowName}/` | `{FlowName}-UnhappyFlow.feature` | `{FlowName} Processor Unhappy Flow` |
-| Query endpoints | `Queries/` | `Get{Resource}Flow.feature` | `Get {Resource} Flow` |
+| HTTP receivers (grouped) | `{Resource}/` | `ReceiverEndpoints.feature` | `Receiver Endpoints` |
+| Service Bus receiver | `{Resource}/` | `{Name}-Receiver.feature` | `{Name} Receiver` |
+| Processor (programmatic) | `{Resource}/` | `{FlowName}.feature` | `{FlowName} Processor` |
+| Processor (file-driven) | `{Resource}/` | `{FlowName}-Files.feature` | `{FlowName} Processor (File-Driven)` |
+| Processor (Service Bus failures) | `{Resource}/` | `{FlowName}-ServiceBusFailures.feature` | `{FlowName} Processor Service Bus Failures` |
+| Processor (unhappy path) | `{Resource}/` | `{FlowName}-UnhappyFlow.feature` | `{FlowName} Processor Unhappy Flow` |
+| Query endpoints | `{Resource}/` | `Get{Resource}Flow.feature` | `Get {Resource} Flow` |
 
 **Examples:** `FooCreated.feature` → `Feature: Foo Created Processor`; `FooCreated-Files.feature` → `Feature: Foo Created Processor (File-Driven)`.
 
@@ -121,7 +120,7 @@ Match the domain vocabulary of the service (`order`, `shipment`, `transaction`, 
 
 ### HTTP receiver features
 
-HTTP receivers with shared behaviour are tested together in `Features/Webhooks/Receivers/ReceiverEndpoints.feature` (not one feature file per receiver):
+HTTP receivers with shared behaviour are tested together in `Features/{Resource}/ReceiverEndpoints.feature` (not one feature file per receiver):
 
 ```gherkin
 Feature: Receiver Endpoints
@@ -201,7 +200,7 @@ Adding a new file-driven scenario:
 
 ### Query endpoint features
 
-GET endpoints live under `Features/Queries/`:
+GET endpoints live under `Features/{Resource}/` (e.g. `Features/Person/GetPersonFlow.feature`):
 
 | Feature file | Typical pattern |
 |---|---|
@@ -354,7 +353,7 @@ Prefer `Fixture` / `FixtureFactory` customizations for simple random data; use `
 
 ### New HTTP receiver (add to ReceiverEndpoints)
 
-When adding a receiver on `/api/foo/created`, add a row to the `Examples` table in `Features/Webhooks/Receivers/ReceiverEndpoints.feature`:
+When adding a receiver on `/api/foo/created`, add a row to the `Examples` table in `Features/Foo/ReceiverEndpoints.feature`:
 
 ```gherkin
       | /api/foo/created | {"id":42,"ref":"99"} | FooCreated | 42 | 42 |
@@ -381,7 +380,7 @@ Also implement the receiver service, add `EventType` (or equivalent), register i
 }
 ```
 
-3. Add to `Features/Webhooks/Processors/FooCreated/FooCreated-Files.feature` Examples table:
+3. Add to `Features/Foo/FooCreated-Files.feature` Examples table:
 ```gherkin
     Examples:
       | scenarioFolder    |
@@ -393,7 +392,8 @@ Also implement the receiver service, add `EventType` (or equivalent), register i
 
 ## Checklist before writing component tests
 
-- [ ] Feature file is under the correct folder (`Webhooks/Receivers/`, `Webhooks/Processors/{FlowName}/`, or `Queries/`)
+- [ ] Feature file is under `Features/{Resource}/` (or `Features/{Slice}/{Resource}/`)
+- [ ] Feature file has **no** `@smoke` / `@integration` tag (component features are untagged)
 - [ ] File name and `Feature:` title describe the same Azure Function
 - [ ] Processors have separate files for programmatic (`{FlowName}.feature`), file-driven (`{FlowName}-Files.feature`), and Service Bus failure scenarios where applicable
 - [ ] `When` steps use the full processor / flow name (e.g. `foo created processor`)

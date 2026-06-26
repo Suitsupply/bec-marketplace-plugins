@@ -12,19 +12,19 @@ Namespace mirrors the folder: `{ServiceName}.<Layer>.<Feature>.Interfaces`.
 
 | Do | Don't |
 |----|-------|
-| `Services/Receivers/Interfaces/IReceiverService.cs` | `Services/Receivers/IReceiverService.cs` next to `FooReceiverService.cs` |
-| `Mappers/Interfaces/IFooMapper.cs` (Api or Infra) | `IOutboundFooMapper.cs` beside `OutboundFooMapper.cs` |
+| `Services/Interfaces/IGetPersonService.cs` | `Services/IGetPersonService.cs` next to `GetPersonService.cs` |
 | `Clients/Interfaces/IFooClient.cs` | `App/Clients/IFooClient.cs` without `Interfaces/` |
+
+> **Mappers are an exception:** boundary mappers are stateless and dependency-free, so they are `static class`es with **no interface** — see [17_models-and-mappers.md](17_models-and-mappers.md). Only when a mapper needs injected collaborators does it get an `I*` contract in `Mappers/Interfaces/`.
 
 **Implementations** sit in the **parent** folder (sibling of `Interfaces/`):
 
 ```
-Services/Receivers/
+Services/
 ├── Interfaces/
-│   ├── IReceiverService.cs              # integration example
-│   └── IFooReceiverService.cs
-├── ReceiverServiceBase.cs               # integration example only
-└── FooReceiverService.cs
+│   ├── IGetPersonService.cs
+│   └── IPersonRequestedProcessorService.cs
+└── PersonServices.cs
 ```
 
 ---
@@ -35,8 +35,8 @@ Services/Receivers/
 |----------|------|-----------------|
 | External client | `App/Clients/Interfaces/` | `{ServiceName}.App.Clients.Interfaces` |
 | App Services | `App/Services/Interfaces/` | `{ServiceName}.App.Services.Interfaces` |
-| Api boundary mapper | `Api/Mappers/Interfaces/` | `{ServiceName}.Api.Mappers.Interfaces` |
-| Infra boundary mapper | `Infra/Clients/{Name}/Mappers/Interfaces/` | `{ServiceName}.Infra.Clients.{Name}.Mappers.Interfaces` |
+| Api boundary mapper (only if injected) | `Api/Mappers/Interfaces/` | `{ServiceName}.Api.Mappers.Interfaces` |
+| Infra boundary mapper (only if injected) | `Infra/Clients/{Name}/Mappers/Interfaces/` | `{ServiceName}.Infra.Clients.{Name}.Mappers.Interfaces` |
 
 **Infra** does not define App-facing interfaces — it **implements** interfaces from `App/Clients/Interfaces/`.
 
@@ -52,33 +52,30 @@ Services/Receivers/
 | **Registration** | DI binds `I*` from `Interfaces/` to implementation in parent folder |
 
 ```csharp
-// App/Services/Receivers/Interfaces/IReceiverService.cs
-namespace {ServiceName}.App.Services.Receivers.Interfaces;
+// App/Services/Interfaces/IGetPersonService.cs
+namespace {ServiceName}.App.Services.Interfaces;
 
-public interface IReceiverService<TModel>
-    where TModel : class
+public interface IGetPersonService
 {
-    Task ProcessAsync(TModel model, CancellationToken cancellationToken = default);
+    Task<Person> GetPersonAsync(int id, CancellationToken cancellationToken = default);
 }
-
-public interface IFooReceiverService : IReceiverService<FooCreatedWebhook>;
 ```
 
 ```csharp
-// App/Services/Receivers/FooReceiverService.cs
-using {ServiceName}.App.Services.Receivers.Interfaces;
+// App/Services/PersonServices.cs
+using {ServiceName}.App.Services.Interfaces;
 
-namespace {ServiceName}.App.Services.Receivers;
+namespace {ServiceName}.App.Services;
 
-public class FooReceiverService(…) : ReceiverServiceBase<FooCreatedWebhook>(…), IFooReceiverService  // integration example
+public class GetPersonService(…) : IGetPersonService
 {
     …
 }
 ```
 
 ```csharp
-// App/Services/Processors/Interfaces/IProcessorService.cs
-namespace {ServiceName}.App.Services.Processors.Interfaces;
+// App/Services/Order/Interfaces/IProcessorService.cs — integration marker (optional)
+namespace {ServiceName}.App.Services.Order.Interfaces;
 
 public interface IProcessorService<TModel>
     where TModel : class
@@ -86,14 +83,14 @@ public interface IProcessorService<TModel>
     Task ProcessAsync(TModel model, CancellationToken cancellationToken = default);
 }
 
-public interface IFooProcessorService : IProcessorService<FooCreatedWebhook>;
+public interface IOrderCreatedProcessorService : IProcessorService<OrderCreatedWebhook>;
 ```
 
 ```csharp
-// App/Services/Processors/FooProcessorService.cs
-public class FooProcessorService(…) : IFooProcessorService
+// App/Services/Order/OrderCreatedProcessorService.cs
+public class OrderCreatedProcessorService(…) : IOrderCreatedProcessorService
 {
-    public Task ProcessAsync(FooCreatedWebhook message, CancellationToken cancellationToken) { … }
+    public Task ProcessAsync(OrderCreatedWebhook message, CancellationToken cancellationToken) { … }
 }
 ```
 
@@ -104,4 +101,4 @@ public class FooProcessorService(…) : IFooProcessorService
 - [ ] New `I*` file is under an `Interfaces/` folder — not beside its implementation
 - [ ] Namespace ends with `.Interfaces`
 - [ ] Consumers `using` the `.Interfaces` namespace (or global usings)
-- [ ] Api mappers: `Api/Mappers/Interfaces/IGetOrderMapper.cs` + `Api/Mappers/GetOrderMapper.cs`
+- [ ] Mappers are `static class`es with no interface — add an `I*` contract only when a mapper needs injected dependencies

@@ -17,9 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using {ServiceName}.Api;
-using {ServiceName}.Api.Functions.Processors;
-using {ServiceName}.Api.Functions.Queries;
-using {ServiceName}.Api.Functions.Receivers;
+using {ServiceName}.Api.Functions.Person;
 using {ServiceName}.Api.Messaging;
 using {ServiceName}.App.Clients.Interfaces;
 
