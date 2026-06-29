@@ -1,6 +1,6 @@
 # Replacement map
 
-The exact file/folder renames and content substitutions for scaffolding a new Azure Functions service from `backend-chapter/template`. Apply these against the copied target tree (never the original template).
+The exact file/folder renames and content substitutions for scaffolding a new Azure Functions service from the GitHub-hosted `backend-chapter/template` (see SKILL.md "Template source"). Apply these against the fetched target tree (never the original template).
 
 Two tokens are used throughout:
 

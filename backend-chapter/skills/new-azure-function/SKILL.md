@@ -2,7 +2,7 @@
 name: new-azure-function
 description: >-
   Scaffold a new Azure Functions service from the Backend Chapter template by
-  copying backend-chapter/template and renaming "Template" to the new project
+  fetching the template from GitHub and renaming "Template" to the new project
   name across projects, devops, bicep, and docs. Use when the user says "I want
   a new Azure function", asks to create/bootstrap a new function app or service,
   or wants to clone the chapter template into a new project.
@@ -10,9 +10,17 @@ description: >-
 
 # New Azure Function
 
-Scaffold a brand-new Azure Functions service from the Backend Chapter [`template/`](../../template) project. The procedure is: ask four questions, copy the template into a target folder, then perform a full `Template` -> project-name rename plus devops/bicep/Confluence value substitution.
+Scaffold a brand-new Azure Functions service from the Backend Chapter template. The procedure is: ask four questions, fetch the template from GitHub into a target folder, then perform a full `Template` -> project-name rename plus devops/bicep/Confluence value substitution.
 
 Works on Cursor and Claude Code.
+
+## Template source
+
+The template lives in the `bec-marketplace-plugins` repository on GitHub under `backend-chapter/template`:
+
+- Repository: `https://github.com/Suitsupply/bec-marketplace-plugins`
+- Path within repo: `backend-chapter/template`
+- Branch: use `main`. Until the coding-standards work is merged, the template only exists on `feature/BEC-319-coding-standards` — fall back to that branch if `backend-chapter/template` is not found on `main`.
 
 ## Workflow checklist
 
@@ -21,7 +29,7 @@ Copy this checklist and track progress:
 ```
 - [ ] Step 1: Collect answers (project name, readme page id, bicep params, csproj description)
 - [ ] Step 2: Derive naming tokens and confirm the resource slug
-- [ ] Step 3: Copy the template into the target folder (exclude bin/obj/TestResults)
+- [ ] Step 3: Fetch the template from GitHub into the target folder
 - [ ] Step 4: Apply the rename (folders, files, contents) — see reference/replacement-map.md
 - [ ] Step 5: Set bicep params + Confluence page id/titles
 - [ ] Step 6: Verify (build + unit/component tests, scan for leftovers)
@@ -29,7 +37,7 @@ Copy this checklist and track progress:
 
 ## Step 1: Collect answers
 
-Use the AskQuestion tool (one form, four questions). Do not start copying until all answers are in.
+Use the AskQuestion tool (one form, four questions). Do not start fetching until all answers are in.
 
 1. **Project name** — PascalCase, dotted-segment friendly (e.g. `ShopifyIntegration`). This replaces `Template`.
 2. **Confluence page id** — the page id where the first document (readme) is published.
@@ -48,10 +56,19 @@ From the project name, derive two replacement tokens and confirm the slug with t
 
 Example: project name `ShopifyIntegration` -> PascalCase token `ShopifyIntegration`, slug `shopifyintegration` (resources become `shopifyintegration-tst-af`, storage `shopifyintegrationtstsa`, etc.).
 
-## Step 3: Copy the template
+## Step 3: Fetch the template from GitHub
 
 - Confirm the target directory (the developer's new/empty repo, or a folder they name).
-- Copy everything under `backend-chapter/template/` into the target, **excluding** `bin/`, `obj/`, and `TestResults/` anywhere in the tree.
+- Pull only `backend-chapter/template` from GitHub using a shallow sparse checkout into a temp directory, then copy its contents into the target. Use `main`; if the template path is missing (pre-merge), retry with `--branch feature/BEC-319-coding-standards`.
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/Suitsupply/bec-marketplace-plugins.git <temp-dir>
+cd <temp-dir>
+git sparse-checkout set backend-chapter/template
+```
+
+- Copy everything under `<temp-dir>/backend-chapter/template/` into the target (the `.cursorignore`, `.editorconfig`, `.gitignore`, `README.md`, `Template.slnx`, and the `devops/`, `docs/`, `src/`, `test/` folders). `bin/`, `obj/`, and `TestResults/` are gitignored so they will not be present, but exclude them anyway if found. Remove the temp directory afterward.
 
 ## Step 4: Apply the rename
 
