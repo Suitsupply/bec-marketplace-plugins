@@ -25,7 +25,7 @@ See **write-tests** for the testing pyramid and when to add unit vs component vs
 ## Project conventions
 
 - **Framework**: NUnit 4 (latest stable), Moq, AutoFixture (with AutoMoq and `AutoFixture.NUnit4` extensions)
-- **Global usings** (no need to import): `AutoFixture`, `AutoFixture.AutoMoq`, `AutoFixture.NUnit4`, `Moq`, `NUnit.Framework`, and the project's own **`{ServiceName}.UnitTests.Helpers`** (so `FixtureFactory` / `ArgumentsNullChecker` are available without a per-file `using`)
+- **Global usings** (no need to import): `AutoFixture`, `AutoFixture.AutoMoq`, `AutoFixture.NUnit4`, `Moq`, `NUnit.Framework`, **`Common.Tests.ArgumentNullChecker`** (from `Suitsupply.Common.Tests.ArgumentNullChecker`), and the project's own **`{ServiceName}.UnitTests.Helpers`** (for `FixtureFactory`)
 - **Promote the Helpers namespace globally** in the `.csproj` so test files never import it:
 
 ```xml
@@ -35,6 +35,7 @@ See **write-tests** for the testing pyramid and when to add unit vs component vs
   <Using Include="AutoFixture.NUnit4" />
   <Using Include="Moq" />
   <Using Include="NUnit.Framework" />
+  <Using Include="Common.Tests.ArgumentNullChecker" />
   <Using Include="{ServiceName}.UnitTests.Helpers" />
 </ItemGroup>
 ```
@@ -59,7 +60,7 @@ When a base class declares a `Fixture` field, create it with `FixtureFactory.Cre
 - `Fixture.Create<T>()`
 - `Fixture.Build<T>().With(x => x.Prop, value).Create()` to override specific properties for the scenario
 
-`FixtureFactory` lives in `test/{ServiceName}.UnitTests/Helpers/FixtureFactory.cs` (namespace `{ServiceName}.UnitTests.Helpers`) alongside `ArgumentsNullChecker`. It may start with no customizations and gain them as the domain needs shaping.
+`FixtureFactory` lives in `test/{ServiceName}.UnitTests/Helpers/FixtureFactory.cs` (namespace `{ServiceName}.UnitTests.Helpers`). `ArgumentsNullChecker` comes from **`Suitsupply.Common.Tests.ArgumentNullChecker`** — do not copy it into Helpers. `FixtureFactory` may start with no customizations and gain them as the domain needs shaping.
 
 ```csharp
 // test/{ServiceName}.UnitTests/Helpers/FixtureFactory.cs — register customizations once
@@ -167,7 +168,7 @@ One derived class per test file. **`ArgumentsNullChecker`** asserts every public
 - Call `ArgumentsNullChecker.CheckStaticMethodParameters(typeof(FooMapper))` for **static classes** (e.g. mappers) — pass the type, since there is no instance. The `NullArgumentChecks` class needs no base class in that case
 - Call `ArgumentsNullChecker.CheckConstructorParameters<FooClass>()` when constructor null checks also need testing
 - Call `ArgumentsNullChecker.CheckConstructorAndMethodsParameters(Sut)` to test both at once
-- No import needed — `{ServiceName}.UnitTests.Helpers` is a **global using** (promoted in the `.csproj`, see [Project conventions](#project-conventions)). Add `using {ServiceName}.UnitTests.Helpers;` only if the project has not promoted it.
+- No import needed — `Common.Tests.ArgumentNullChecker` and `{ServiceName}.UnitTests.Helpers` are **global usings** (promoted in the `.csproj`, see [Project conventions](#project-conventions)).
 
 ### One derived class per public method
 - Name the derived class after the public method under test: `public class {MethodName} : FooReceiverTestsBase` (e.g. `ProcessWebhookAsync`, `GetOrderAsync` — not a vague name like `Run`)
@@ -210,7 +211,7 @@ Examples:
 |---|---|
 | **Api/Functions** | HTTP status codes, exception mapping, argument validation |
 | **Api/Mappers** | Domain → API response DTO mapping |
-| **Api/Messaging** (e.g. `ServiceBusRetryScheduler`) | Retry vs dead-letter branching, delivery-count carry-forward, backoff — Api-layer infrastructure with real logic. Mock the **concrete Azure SDK types** directly (see below) |
+| **Api processors** (with `IServiceBusRetryScheduler`) | Mock `IServiceBusRetryScheduler` — scheduler behaviour is covered in `Suitsupply.Common.ServiceBusRetryScheduler` unit tests |
 | **App/Services** | Business orchestration with mocked dependencies |
 | **App/Services/{Resource}/Flows** | Individual flow handlers when one resource branches on subtype |
 | **App/Enrichment/Steps** | Single-step behaviour with mocked `I*` client interfaces |
@@ -220,14 +221,15 @@ Examples:
 
 #### Mocking concrete Azure SDK types
 
-Most dependencies are mocked through `I*` interfaces. **Api-layer messaging components** that wrap the Azure Service Bus SDK are the exception — they have real branching logic worth unit-testing, and the SDK exposes **mockable virtual members**:
+Most dependencies are mocked through `I*` interfaces. For **Service Bus processors**, mock `IServiceBusRetryScheduler` from `Suitsupply.Common.ServiceBusRetryScheduler` — scheduler behaviour is unit-tested in the common package, not in service repos.
 
-- Mock the concrete SDK types directly with Moq: `Mock<ServiceBusClient>`, `Mock<ServiceBusSender>`, `Mock<ServiceBusMessageActions>`.
-- Wire `client.CreateSender(...)` to return the mocked sender so the SUT's internal sender cache resolves to your mock.
-- Build received messages with the SDK test factory: `ServiceBusModelFactory.ServiceBusReceivedMessage(body: …, deliveryCount: …, properties: …)` — do **not** hand-construct or mock `ServiceBusReceivedMessage`.
-- Assert outcomes via `messageActions.Verify(a => a.CompleteMessageAsync(...))` / `DeadLetterMessageAsync(...)` and capture the rescheduled `ServiceBusMessage` with a `Callback` to assert delivery-count carry-forward.
+When you do need to mock concrete SDK types (rare in service repos), the Azure Service Bus SDK exposes **mockable virtual members**:
 
-This is the only place the chapter mocks concrete framework types instead of `I*` interfaces; it does **not** override the rule that **Infra client implementations** (thin HTTP/SDK adapters) are excluded from unit tests.
+- Mock with Moq: `Mock<ServiceBusClient>`, `Mock<ServiceBusSender>`, `Mock<ServiceBusMessageActions>`.
+- Wire `client.CreateSender(...)` to return the mocked sender.
+- Build received messages with `ServiceBusModelFactory.ServiceBusReceivedMessage(...)`.
+
+This does **not** override the rule that **Infra client implementations** (thin HTTP/SDK adapters) are excluded from unit tests.
 
 ### What **not** to unit-test
 
@@ -407,7 +409,7 @@ public static class FetchOrderStepTests
 - [ ] Namespace mirrors folder path using `{ServiceName}.UnitTests.*`
 - [ ] Outer class is `public static class {Name}Tests`
 - [ ] One `abstract` base class: `{Name}TestsBase`
-- [ ] `NullArgumentChecks` class always present, using `ArgumentsNullChecker`
+- [ ] `NullArgumentChecks` class always present, using `ArgumentsNullChecker` from `Suitsupply.Common.Tests.ArgumentNullChecker`
 - [ ] One derived class per public method/endpoint
 - [ ] `Fixture` is declared as `FixtureFactory.Create()`, never `new Fixture()` or `new()`
 - [ ] Domain rules are in `FixtureFactory` **customizations** — no `FixtureExtensions` / shared `Create*` builders

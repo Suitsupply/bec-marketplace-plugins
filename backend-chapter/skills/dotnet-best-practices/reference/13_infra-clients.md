@@ -85,7 +85,7 @@ internal sealed class FooSettingsValidator : AbstractValidator<FooSettings>
 
 Every settings record follows [12_configuration-validation.md](12_configuration-validation.md). Registration **must** include `ValidateOnStart()`.
 
-In `Infra/Extensions/ServiceCollectionExtensions.cs`:
+In `Infra/Extensions/ServiceCollectionExtensions.cs` — `FluentValidateOptions<T>` from **`Suitsupply.Common.FluentValidateOptions`** (`using Common.Validation;`):
 
 ```csharp
 private static IServiceCollection AddFooClient(this IServiceCollection services, IConfiguration config)

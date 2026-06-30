@@ -10,7 +10,7 @@ Applies to:
 
 - `ServiceSettings` (via `AddServiceInfo`)
 - Infra HTTP/blob/queue client settings (`Infra/Clients/.../Settings/`)
-- Api-only options (`Api/.../Settings/` — e.g. retry, messaging)
+- Api-only options (e.g. `MessageRetryOptions` via `AddServiceBusRetryScheduler`)
 - Any other `IOptions<T>` / `IOptionsSnapshot<T>` bound from config
 
 ## Artifacts per settings type
@@ -19,35 +19,21 @@ Applies to:
 |----------|----------|
 | Settings record | `.../Settings/{Name}.cs` — `[ExcludeFromCodeCoverage]` (no logic) |
 | Validator | `.../Validators/{Name}Validator.cs` — `AbstractValidator<T>` (**has logic** — unit-test, do not exclude) |
-| `FluentValidateOptions<T>` adapter | `Infra/Validators/FluentValidateOptions.cs` — **has logic** — unit-test, do not exclude |
+| `FluentValidateOptions<T>` adapter | **`Suitsupply.Common.FluentValidateOptions`** NuGet — namespace `Common.Validation` — **do not copy** |
 | Registration | `Program.cs` or `Infra/Extensions/ServiceCollectionExtensions.cs` |
 
-## `FluentValidateOptions<T>` (once per solution)
+## `FluentValidateOptions<T>` (shared package)
 
-`Infra/Validators/FluentValidateOptions.cs`:
+**NuGet (Infra project):** `Suitsupply.Common.FluentValidateOptions`
 
 ```csharp
-using FluentValidation;
-using Microsoft.Extensions.Options;
+using Common.Validation;
 
-namespace {ServiceName}.Infra.Validators;
-
-public sealed class FluentValidateOptions<TOptions>(AbstractValidator<TOptions> validator)
-    : IValidateOptions<TOptions>
-    where TOptions : class
-{
-    public ValidateOptionsResult Validate(string? name, TOptions options)
-    {
-        var result = validator.Validate(options);
-
-        if (result.IsValid)
-            return ValidateOptionsResult.Success;
-
-        var errors = result.Errors.Select(e => e.ErrorMessage);
-        return ValidateOptionsResult.Fail(errors);
-    }
-}
+services.AddSingleton<IValidateOptions<FooSettings>>(
+    _ => new FluentValidateOptions<FooSettings>(new FooSettingsValidator()));
 ```
+
+The adapter bridges FluentValidation validators with `IValidateOptions<T>`. Behaviour is unit-tested in the common package — services only unit-test their own `*Validator` classes.
 
 ## Registration pattern
 
@@ -88,10 +74,11 @@ internal sealed class FooSettingsValidator : AbstractValidator<FooSettings>
 | Settings scope | Register in |
 |----------------|-------------|
 | Service-wide / Infra clients | `ServiceCollectionExtensions.AddInfrastructure` |
-| Api-only (host concerns) | `Program.cs` `ConfigureServices` |
+| Api-only (host concerns) | `Program.cs` `ConfigureServices` or `AddServiceBusRetryScheduler` |
 
 ## Anti-patterns
 
 - Binding config with `Configure<T>()` or `GetSection().Get<T>()` **without** `ValidateOnStart()` and a validator
 - Reading config values lazily on first use with manual `if (string.IsNullOrEmpty(...))` throws at runtime
 - Validating only some settings while leaving others unvalidated
+- Copying `FluentValidateOptions<T>` into `Infra/Validators/` — use the common package instead

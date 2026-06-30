@@ -49,6 +49,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.OpenApi" Version="1.6.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
+    <PackageReference Include="Suitsupply.Common.ServiceBusRetryScheduler" Version="2026.06.30.3" />
     <PackageReference Include="Suitsupply.Common.ServiceInfo.Functions" Version="2026.5.12.1" />
   </ItemGroup>
 

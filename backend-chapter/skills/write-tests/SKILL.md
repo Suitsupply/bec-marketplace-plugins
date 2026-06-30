@@ -74,6 +74,6 @@ After writing production code (**dotnet-best-practices** references 12–18), ap
 
 ## Sub-skills
 
-- **write-unit-tests** — NUnit, base/derived classes, `FixtureFactory`, `ArgumentsNullChecker`, static mappers
+- **write-unit-tests** — NUnit, base/derived classes, `FixtureFactory`, `ArgumentsNullChecker` (`Suitsupply.Common.Tests.ArgumentNullChecker`), static mappers
 - **write-component-tests** — Reqnroll, `ApplicationFactory`, feature file naming
 - **write-integration-tests** — `@smoke` / `@integration`, runsettings, side-effect polling

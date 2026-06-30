@@ -22,6 +22,7 @@ public sealed class FooService(IFooClient fooClient)
 services.Configure<FooSettings>(config.GetSection(nameof(FooSettings)));
 
 // ✓ correct — FluentValidation + ValidateOnStart; host refuses to start
+// FluentValidateOptions<T> from Suitsupply.Common.FluentValidateOptions (namespace Common.Validation)
 services.AddOptions<FooSettings>()
     .Bind(config.GetSection(nameof(FooSettings)))
     .ValidateOnStart();

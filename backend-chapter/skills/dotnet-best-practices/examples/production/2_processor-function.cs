@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Common.ServiceBusRetryScheduler;
+using Common.ServiceBusRetryScheduler.Interfaces;
 using {ServiceName}.Api.Mappers.v1;
 using {ServiceName}.Api.Models.v1.Foo.Requests;
 using {ServiceName}.App.Extensions;
@@ -12,7 +14,7 @@ using {ServiceName}.App.Services.Foo.Interfaces;
 
 namespace {ServiceName}.Api.Functions.Foo;
 
-// Queue listener — Service Bus processor. Retry/dead-letter via IServiceBusRetryScheduler (Api/Messaging/Interfaces/).
+// Queue listener — Service Bus processor. Retry/dead-letter via IServiceBusRetryScheduler (Suitsupply.Common.ServiceBusRetryScheduler).
 // Entry log at Function: MessageId. Entry log with OrderId in App processor service (processor-service.cs).
 
 public class FooProcessor(

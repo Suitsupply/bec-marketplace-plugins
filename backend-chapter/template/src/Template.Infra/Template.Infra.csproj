@@ -44,6 +44,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
     <PackageReference Include="Scrutor" Version="6.0.1" />
+    <PackageReference Include="Suitsupply.Common.FluentValidateOptions" Version="2026.06.30.3" />
   </ItemGroup>
 
 </Project>

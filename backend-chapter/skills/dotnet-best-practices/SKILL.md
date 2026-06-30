@@ -256,9 +256,47 @@ services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 
 `ServiceSettings` validator and fail-early pattern: [Configuration validation (fail early)](#configuration-validation-fail-early), [12_configuration-validation.md](reference/12_configuration-validation.md).
 
-### Service Bus retry scheduler (planned shared package)
+### FluentValidateOptions (`Suitsupply.Common.FluentValidateOptions`)
 
-`IServiceBusRetryScheduler` / `ServiceBusRetryScheduler` (delayed retry + dead-letter for Service Bus processors) is generic, service-agnostic plumbing intended to graduate into a **shared chapter package**. Until it is published, services copy the reference implementation into `Api/Messaging/` and mark it with `// TODO: move to shared chapter package` — do not fork the behaviour per service. Full template: [19_servicebus-retry-scheduler.md](reference/19_servicebus-retry-scheduler.md).
+Bridges FluentValidation validators with the `IValidateOptions<T>` pipeline so strongly-typed settings are validated at application startup. Used for every `AddOptions<T>().ValidateOnStart()` registration in Infra (and Api when options are bound outside `AddServiceBusRetryScheduler`).
+
+**NuGet package (Infra project):** `Suitsupply.Common.FluentValidateOptions`
+
+```csharp
+using Common.Validation;
+
+services.AddSingleton<IValidateOptions<FooSettings>>(
+    _ => new FluentValidateOptions<FooSettings>(new FooSettingsValidator()));
+```
+
+Full pattern: [12_configuration-validation.md](reference/12_configuration-validation.md).
+
+### Service Bus retry scheduler (`Suitsupply.Common.ServiceBusRetryScheduler`)
+
+`IServiceBusRetryScheduler` / `ServiceBusRetryScheduler` — delayed retry + dead-letter for Service Bus processors. **Do not copy** into `Api/Messaging/`; reference the shared package.
+
+**NuGet package (Api project):** `Suitsupply.Common.ServiceBusRetryScheduler`
+
+```csharp
+using Common.ServiceBusRetryScheduler.Extensions;
+using Common.ServiceBusRetryScheduler.Settings;
+
+services.AddServiceBusRetryScheduler(config.GetSection(nameof(MessageRetryOptions)));
+```
+
+Inject `IServiceBusRetryScheduler` (`Common.ServiceBusRetryScheduler.Interfaces`) in processor functions. Full behaviour and calling pattern: [19_servicebus-retry-scheduler.md](reference/19_servicebus-retry-scheduler.md).
+
+### ArgumentsNullChecker (`Suitsupply.Common.Tests.ArgumentNullChecker`)
+
+Test helper that asserts null/whitespace guards on public method and constructor parameters. **Do not copy** into `UnitTests/Helpers/`; reference the shared package.
+
+**NuGet package (UnitTests project):** `Suitsupply.Common.Tests.ArgumentNullChecker`
+
+```xml
+<Using Include="Common.Tests.ArgumentNullChecker" />
+```
+
+Usage: `ArgumentsNullChecker.CheckMethodParameters(Sut)`. Full pattern: **write-unit-tests**.
 
 ---
 

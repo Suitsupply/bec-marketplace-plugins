@@ -46,7 +46,7 @@ See `shopifyintegration`: `OrderUpdatedProcessorService.cs`, `TransactionCreated
 
 ## Api messaging (example)
 
-`Api/Messaging/Interfaces/IServiceBusRetryScheduler.cs` — retry/dead-letter on processor failure.
+`IServiceBusRetryScheduler` from **`Suitsupply.Common.ServiceBusRetryScheduler`** — retry/dead-letter on processor failure. Register via `AddServiceBusRetryScheduler` in `Program.cs`.
 
 `host.json`: `autoCompleteMessages: false` when Functions complete messages manually.
 

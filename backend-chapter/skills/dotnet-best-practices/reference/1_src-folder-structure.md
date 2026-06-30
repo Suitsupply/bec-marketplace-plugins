@@ -37,7 +37,7 @@ Both layouts must still follow chapter rules: **`Interfaces/`** subfolders for c
 | You need… | Typical folders |
 |-----------|-----------------|
 | HTTP webhook or event ingest | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
-| Async queue processing | `Api/Functions/{Resource}/`, `App/Services/{Resource}/`, optional `Api/Messaging/` |
+| Async queue processing | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
 | Fetch related data before publish | `App/Enrichment/` |
 | HTTP read/query API | `Api/Functions/{Resource}/` or `Controllers/` |
 
@@ -215,7 +215,7 @@ File-scoped namespaces; folder path must match exactly (IDE0130).
 | Webhook ingest (when applicable) | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
 | Queue processor (when applicable) | `Api/Functions/{Resource}/`, `App/Services/{Resource}/` |
 | Pre-publish enrichment (when applicable) | `App/Enrichment/` |
-| Service Bus retry scheduler (when applicable) | `Api/Messaging/` |
+| Service Bus retry scheduler (when applicable) | `Suitsupply.Common.ServiceBusRetryScheduler` NuGet — register in `Program.cs` via `AddServiceBusRetryScheduler` |
 | Public API request DTO | `Api.Models/v1/{Feature}/Requests/` |
 | Public API response DTO | `Api.Models/v1/{Feature}/Responses/` |
 | Domain model | `App.Models/{Feature}/Models/` |
@@ -258,8 +258,7 @@ test/{ServiceName}.UnitTests/
 ├── AssemblyInfo.cs                   # InstancePerTestCase
 ├── Helpers/
 │   ├── FixtureFactory.cs             # registers ICustomization / specimen builders
-│   ├── Customizations/               # e.g. PresentmentMoneyCustomization.cs
-│   └── ArgumentsNullChecker.cs
+│   └── Customizations/               # e.g. PresentmentMoneyCustomization.cs
 ├── Api/                              # mirrors src/{ServiceName}.Api/
 │   ├── Functions/
 │   └── Mappers/

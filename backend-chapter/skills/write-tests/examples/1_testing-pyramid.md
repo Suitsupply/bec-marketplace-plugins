@@ -9,7 +9,7 @@
 - **Default** for testable production code — aim for close to **100%** line and branch coverage in unit tests
 - Testing pure mapping logic with many edge cases
 - Testing a single enrichment step with one mocked client
-- Testing null-guard enforcement via `ArgumentsNullChecker`
+- Testing null-guard enforcement via `ArgumentsNullChecker` (`Suitsupply.Common.Tests.ArgumentNullChecker`)
 - Testing HTTP status code mapping in a thin function wrapper (inject **real** Api/Infra mappers — do not mock `I*Mapper`)
 
 **Do not** unit-test framework wiring, DI registration, or **Infra client implementations** — cover those with component and integration tests. **Do not** mock mappers — they are static classes, called directly (`FooMapper.ToDomain(...)`); mapping edge cases belong in `{Mapper}Tests.cs`.

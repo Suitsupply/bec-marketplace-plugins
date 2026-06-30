@@ -1,5 +1,3 @@
-using {ServiceName}.UnitTests.Helpers;
-
 namespace {ServiceName}.UnitTests.App.Services;
 
 public static class FooServiceTests

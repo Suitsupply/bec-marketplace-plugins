@@ -12,7 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Template.Api;
 using Template.Api.Example.Functions.v1.Persons;
 using Template.Api.Example.Functions.v1.Vehicles;
-using Template.Api.Messaging.Interfaces;
+using Common.ServiceBusRetryScheduler.Interfaces;
 using Template.App.Example.Clients.Interfaces;
 
 namespace Template.ComponentTests.Support;

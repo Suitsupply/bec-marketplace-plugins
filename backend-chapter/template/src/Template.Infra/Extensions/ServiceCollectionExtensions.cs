@@ -9,7 +9,7 @@ using Template.Infra.Example.Clients.Swapi.Settings;
 using Template.Infra.Example.Clients.Swapi.Validators;
 using Template.Infra.Example.Settings;
 using Template.Infra.Example.Settings.Validators;
-using Template.Infra.Validators;
+using Common.Validation;
 using AzureServiceBusClient = Azure.Messaging.ServiceBus.ServiceBusClient;
 
 namespace Template.Infra.Extensions;

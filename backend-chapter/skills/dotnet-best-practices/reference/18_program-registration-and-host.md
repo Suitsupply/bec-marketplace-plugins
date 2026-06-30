@@ -27,7 +27,7 @@ Register App services in `Program.ConfigureServices`; Infra wiring in `AddInfras
 services.AddServiceInfo(config.GetSection(nameof(ServiceSettings)));
 ```
 
-Then App-layer services (lifetime from table above), then `AddInfrastructure(config)`.
+Then App-layer services (lifetime from table above), then `AddInfrastructure(config)`. When the service has Service Bus processors, also call `AddServiceBusRetryScheduler` — see [19_servicebus-retry-scheduler.md](19_servicebus-retry-scheduler.md).
 
 Configure `ServiceSettings:ServiceName` before local runs:
 

@@ -87,7 +87,7 @@ var total = envelope.Source.Lines.SumLineTotals();
 | `{Type}Extensions` | Chapter standard for pure model logic |
 | `ServiceCollectionExtensions` | DI registration — `AddInfrastructure`, `AddServiceInfo` |
 | `*Constants` | Named constant holders — no behaviour |
-| `UnitTests/Helpers/` | `FixtureFactory`, AutoFixture **customizations**, `ArgumentsNullChecker` — **no** shared `Create*` builder extensions |
+| `UnitTests/Helpers/` | `FixtureFactory`, AutoFixture **customizations** — **no** shared `Create*` builder extensions. `ArgumentsNullChecker` comes from **`Suitsupply.Common.Tests.ArgumentNullChecker`** |
 
 ---
 

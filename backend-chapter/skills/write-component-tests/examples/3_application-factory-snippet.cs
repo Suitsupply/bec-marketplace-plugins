@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using {ServiceName}.Api;
 using {ServiceName}.Api.Functions.Person;
-using {ServiceName}.Api.Messaging;
+using Common.ServiceBusRetryScheduler.Interfaces;
 using {ServiceName}.App.Clients.Interfaces;
 
 namespace {ServiceName}.ComponentTests.Support;
@@ -153,7 +153,7 @@ public class ApplicationFactory : WebApplicationFactory<Program>
 using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Reqnroll;
-using {ServiceName}.Api.Messaging;
+using Common.ServiceBusRetryScheduler;
 using {ServiceName}.App.Models.Outbound;
 
 namespace {ServiceName}.ComponentTests.Support;
