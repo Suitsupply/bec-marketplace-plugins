@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <FUNCTIONS_HOST_URL>https://{service-slug}-tst-af.azurewebsites.net</FUNCTIONS_HOST_URL>
+      <!-- Secrets (e.g. FUNCTIONS_CODE, BLOB_CONNECTION_STRING) come from CI env vars — not runsettings -->
+    </EnvironmentVariables>
+    <TestCaseFilter>Category=smoke|Category=integration</TestCaseFilter>
+  </RunConfiguration>
+</RunSettings>

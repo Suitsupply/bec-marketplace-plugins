@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Run settings for the TST environment.
+     Local usage: dotnet test -settings integrationtests.tst.runsettings
+     CI: FUNCTIONS_CODE is injected by the pipeline variable group when deploy is enabled. -->
+<RunSettings>
+  <RunConfiguration>
+    <TestCaseFilter>Category=smoke|Category=integration</TestCaseFilter>
+    <EnvironmentVariables>
+      <FUNCTIONS_HOST_URL>https://template-tst-af.azurewebsites.net</FUNCTIONS_HOST_URL>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

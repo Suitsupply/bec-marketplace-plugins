@@ -70,7 +70,7 @@ a patch on top becomes `2.1.1`, not `1.x.x`.
 
 | Plugin | Version |
 |---|---|
-| backend-chapter | 1.1.0 |
+| backend-chapter | 1.2.0 |
 | continuous-documentation | 2.1.1 |
 | email-agent-learning | 1.0.1 |
 

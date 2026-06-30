@@ -1,0 +1,107 @@
+name: '$(Date:yyyy).$(Date:MM).$(Date:dd).$(Rev:r)'
+
+trigger:
+  branches:
+    include:
+      - refs/heads/main
+      - refs/heads/release/*
+      - refs/heads/hotfix/*
+
+pr:
+  branches:
+    include:
+      - refs/heads/main
+
+pool:
+  vmImage: 'windows-latest'
+
+resources:
+  repositories:
+    - repository: CicdTemplates
+      type: git
+      name: Stores/cicd-templates
+    - repository: PipelineTemplates
+      type: git
+      name: Shared/PipelineTemplates
+
+stages:
+  - template: azurepipelines/dotnet-build-stage-template.yml@CicdTemplates
+    parameters:
+      solution: 'Template.slnx'
+      publishAppProjects: 'src/Template.Api/Template.Api.csproj'
+
+      unitTestProjects:
+        - 'test/Template.UnitTests/Template.UnitTests.csproj'
+
+      componentTestProjects:
+        - 'test/Template.ComponentTests/Template.ComponentTests.csproj'
+
+      nugetPackageProjects:
+        - 'src/Template.Api.Models/Template.Api.Models.csproj'
+
+      sonarProjectKey: 'Template'
+      sonarProjectName: 'Template'
+
+      dotnetSdkVersions:
+        - '10.x'
+
+  - stage: PublishDocumentation
+    displayName: 'Publish Documentation to Confluence'
+    dependsOn: Build
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    variables:
+      - group: Confluence
+    jobs:
+      - job: PublishDocs
+        displayName: 'Publish to Confluence'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            clean: true
+
+          - template: steps/confluence/confluence-publish.yml@PipelineTemplates
+            parameters:
+              markdownFilePath: 'docs/00-readme.md'
+              confluencePageId: '1111111111'
+              confluencePageTitle: 'Template - Readme'
+
+          - template: steps/confluence/confluence-publish.yml@PipelineTemplates
+            parameters:
+              markdownFilePath: 'docs/00-technical-overview.md'
+              confluencePageId: '1111111112'
+              confluencePageTitle: 'Template - Technical Overview'
+
+          - template: steps/confluence/confluence-publish.yml@PipelineTemplates
+            parameters:
+              markdownFilePath: 'docs/00-example-feature.md'
+              confluencePageId: '1111111113'
+              confluencePageTitle: 'Template - Example Feature'
+
+  - template: azurepipelines/deploy-and-test-stage-template.yml@CicdTemplates
+    parameters:
+      env: tst
+      dependsOn: Build
+      azureSubscription: 'Engineering-Tst'
+      resourceGroupName: 'template-tst-rg'
+      functionAppName: 'template-tst-af'
+      webApiPackage: 'Template.Api.zip'
+      integrationTestProject: 'test/Template.IntegrationTests/Template.IntegrationTests.csproj'
+      integrationTestSettingsDir: 'test/Template.IntegrationTests'
+      integrationTestVariableGroup: 'template-tst'
+      integrationTestEnv:
+        FUNCTIONS_CODE: $(FUNCTIONS_CODE)
+        BLOB_CONNECTION_STRING: $(BLOB_CONNECTION_STRING)
+
+  - template: azurepipelines/deploy-and-test-stage-template.yml@CicdTemplates
+    parameters:
+      env: prd
+      dependsOn: Deploy_tst
+      smokeOnly: true
+      requireReleaseBranch: true
+      azureSubscription: 'Engineering-Prd'
+      resourceGroupName: 'template-prd-rg'
+      functionAppName: 'template-prd-af'
+      webApiPackage: 'Template.Api.zip'
+      integrationTestProject: 'test/Template.IntegrationTests/Template.IntegrationTests.csproj'
+      integrationTestSettingsDir: 'test/Template.IntegrationTests'
