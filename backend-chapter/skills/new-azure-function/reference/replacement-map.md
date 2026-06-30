@@ -9,6 +9,8 @@ Two tokens are used throughout:
 
 Work in this order: (1) rename folders, (2) rename files, (3) replace file contents.
 
+> **Non-destructive.** Rename a folder by MOVING the existing directory (`mv old new`) so all nested files and subfolders come with it. Rename files in place. Replace text in place. Never recreate a folder and move only its `.csproj`/`local.settings.json` into it — that drops every `.cs` file and subfolder. After step 3, the `.cs` file count must be unchanged from the freshly fetched template.
+
 ## 1. Folder renames (under `src/` and `test/`)
 
 - `src/Template.Api` -> `src/<Name>.Api`

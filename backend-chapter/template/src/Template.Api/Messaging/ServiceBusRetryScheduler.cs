@@ -19,13 +19,25 @@ public sealed class ServiceBusRetryScheduler(ServiceBusClient serviceBusClient, 
     private readonly MessageRetryOptions _options = options.Value;
     private readonly ConcurrentDictionary<string, ServiceBusSender> _senders = new();
 
-    public async Task<RetryOutcome> RescheduleOrDeadLetterAsync(ServiceBusMessageActions messageActions, ServiceBusReceivedMessage message,
+    public Task<RetryOutcome> RescheduleOrDeadLetterAsync(ServiceBusMessageActions messageActions, ServiceBusReceivedMessage message,
         string queueName, Exception exception, CancellationToken cancellationToken = default)
+        => RescheduleOrDeadLetterAsync(messageActions, message, queueName, exception, [], cancellationToken);
+
+    public async Task<RetryOutcome> RescheduleOrDeadLetterAsync(ServiceBusMessageActions messageActions, ServiceBusReceivedMessage message,
+        string queueName, Exception exception, IReadOnlyList<Type> immediateDeadLetterExceptionTypes, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(messageActions);
         ArgumentNullException.ThrowIfNull(message);
         ArgumentException.ThrowIfNullOrWhiteSpace(queueName);
         ArgumentNullException.ThrowIfNull(exception);
+        ArgumentNullException.ThrowIfNull(immediateDeadLetterExceptionTypes);
+
+        if (immediateDeadLetterExceptionTypes.Any(exceptionType => exceptionType.IsInstanceOfType(exception)))
+        {
+            logger.LogError(exception, "Dead-lettering message {MessageId} immediately because the error type {ExceptionType} is configured for immediate dead-lettering. Reason: {Reason}", message.MessageId, exception.GetType().Name, exception.Message);
+            await messageActions.DeadLetterMessageAsync(message, null, exception.Message, exception.ToString(), cancellationToken);
+            return RetryOutcome.DeadLettered;
+        }
 
         var deliveryCount = ResolveDeliveryCount(message);
         if (deliveryCount >= _options.MaxDeliveryCount)

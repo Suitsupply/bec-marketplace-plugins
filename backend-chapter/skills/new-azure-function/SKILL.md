@@ -29,8 +29,8 @@ Copy this checklist and track progress:
 ```
 - [ ] Step 1: Collect answers (project name, readme page id, bicep params, csproj description)
 - [ ] Step 2: Derive naming tokens and confirm the resource slug
-- [ ] Step 3: Fetch the template from GitHub into the target folder
-- [ ] Step 4: Apply the rename (folders, files, contents) — see reference/replacement-map.md
+- [ ] Step 3: Fetch the template from GitHub into the target folder (then verify .cs count)
+- [ ] Step 4: Apply the rename — move folders, rename project files, replace text IN PLACE (non-destructive); see reference/replacement-map.md
 - [ ] Step 5: Set bicep params + Confluence page id/titles
 - [ ] Step 6: Verify (build + unit/component tests, scan for leftovers)
 ```
@@ -68,17 +68,53 @@ cd <temp-dir>
 git sparse-checkout set backend-chapter/template
 ```
 
-- Copy everything under `<temp-dir>/backend-chapter/template/` into the target (the `.cursorignore`, `.editorconfig`, `.gitignore`, `README.md`, `Template.slnx`, and the `devops/`, `docs/`, `src/`, `test/` folders). `bin/`, `obj/`, and `TestResults/` are gitignored so they will not be present, but exclude them anyway if found. Remove the temp directory afterward.
+- Copy the **entire** `<temp-dir>/backend-chapter/template/` tree into the target **recursively and verbatim** — every file and folder (`.cursorignore`, `.editorconfig`, `.gitignore`, `README.md`, `Template.slnx`, and the full `devops/`, `docs/`, `src/`, `test/` trees including all nested `.cs` files such as `src/Template.Api/Program.cs`). Use a recursive directory copy (`cp -r`, `robocopy /E`, or `Copy-Item -Recurse`); do **not** enumerate or cherry-pick files. `bin/`, `obj/`, and `TestResults/` are gitignored so they will not be present.
+- **Verify the copy before continuing.** Record the source `.cs` count and confirm the target matches:
+
+```bash
+find "<temp-dir>/backend-chapter/template" -name '*.cs' | wc -l   # SOURCE_CS_COUNT
+find "<target>" -name '*.cs' | wc -l                              # must equal SOURCE_CS_COUNT
+```
+
+  If the counts differ, the copy failed — fix it before proceeding. Then remove the temp directory.
 
 ## Step 4: Apply the rename
 
-Perform folder/file renames first, then content replacements. The complete, file-by-file map is in [reference/replacement-map.md](reference/replacement-map.md). In summary:
+> **The rename is non-destructive. Never delete files, never recreate folders, and never copy only "the files that matter."** A folder rename must MOVE the existing directory with all of its contents intact; content edits happen IN PLACE. The most common failure is recreating each renamed project folder and moving only its `.csproj` / `local.settings.json`, which silently drops every subfolder and `.cs` file (including `Program.cs`). Do not do that.
 
-- Rename the eight project folders + their `.csproj`, and `Template.slnx`, from `Template.*` to `<Name>.*`.
-- Replace the `Template` token in file contents across the whole tree: C# `namespace`/`using`, `.slnx` project paths, `<Product>`, `<PackageId>` (`Suitsupply.Template.Api.Models` -> `Suitsupply.<Name>.Api.Models`), `PackageTags`, `InternalsVisibleTo`, pipeline project/solution paths, `webApiPackage`, `sonarProjectKey`/`sonarProjectName`.
+Work against the **target** tree (the temp clone is already deleted). Do the three sub-steps strictly in order. The complete, file-by-file map is in [reference/replacement-map.md](reference/replacement-map.md).
+
+**4a. Rename the eight project directories** (move the whole directory; contents come with it):
+
+```bash
+mv src/Template.Api          src/<Name>.Api
+mv src/Template.Api.Models   src/<Name>.Api.Models
+mv src/Template.App          src/<Name>.App
+mv src/Template.App.Models   src/<Name>.App.Models
+mv src/Template.Infra        src/<Name>.Infra
+mv test/Template.UnitTests        test/<Name>.UnitTests
+mv test/Template.ComponentTests   test/<Name>.ComponentTests
+mv test/Template.IntegrationTests test/<Name>.IntegrationTests
+```
+
+**4b. Rename the nine project files** (the `.slnx` and each `.csproj`), e.g. `mv Template.slnx <Name>.slnx`, `mv src/<Name>.Api/Template.Api.csproj src/<Name>.Api/<Name>.Api.csproj`, etc. Rename the file only — do not touch its folder's other contents.
+
+**4c. Replace text IN PLACE across every remaining file** (recursive find + replace; do not move or delete anything, and skip any `.git/` directory):
+
+- `Template` token -> `<Name>`: C# `namespace`/`using` and type references, `.slnx` project paths, `<Product>`, `<PackageId>` (`Suitsupply.Template.Api.Models` -> `Suitsupply.<Name>.Api.Models`), `PackageTags`, `InternalsVisibleTo`, pipeline project/solution paths, `webApiPackage`, `sonarProjectKey`/`sonarProjectName`.
 - Set every `.csproj` `<Description>` to the Step 1 answer.
-- Replace the `ServiceSettings` service name (`Template.Api` -> `<Name>.Api`) and the component-test in-memory value (`"Template"` -> `<Name>`).
-- Replace the `template` resource slug across the pipeline and both bicep parameter files (resource names + storage account names).
+- `ServiceSettings` service name `Template.Api` -> `<Name>.Api`, and the component-test in-memory value `"Template"` -> `<Name>`.
+- `template` resource slug -> `<slug>` across the pipeline and both bicep parameter files (resource names + storage account names).
+
+**4d. Verify nothing was lost.** The `.cs` count must equal `SOURCE_CS_COUNT` from Step 3, and the key nested files/folders must still exist:
+
+```bash
+find . -name '*.cs' | wc -l            # must equal SOURCE_CS_COUNT
+ls src/<Name>.Api/Program.cs           # must exist
+ls -d src/<Name>.Api/Example test/<Name>.UnitTests/Example   # must exist
+```
+
+  If anything is missing, the rename was destructive — stop and restore from a fresh fetch.
 
 ## Step 5: Bicep params + Confluence
 

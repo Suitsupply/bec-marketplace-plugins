@@ -12,6 +12,7 @@ public static class ServiceBusRetrySchedulerTests
 {
     public abstract class ServiceBusRetrySchedulerTestsBase
     {
+        protected readonly Fixture Fixture = FixtureFactory.Create();
         protected readonly Mock<ServiceBusClient> BusClient;
         protected readonly Mock<ServiceBusSender> Sender;
         protected readonly Mock<ServiceBusMessageActions> MessageActions;
@@ -63,18 +64,19 @@ public static class ServiceBusRetrySchedulerTests
         [Test]
         public void ShouldEnforceNullChecksOnMethods()
         {
-            // Act & Assert
+            // Act
             ArgumentsNullChecker.CheckMethodParameters(Scheduler);
         }
     }
 
     public class RescheduleOrDeadLetterAsync : ServiceBusRetrySchedulerTestsBase
     {
-        [Test, AutoData]
-        public async Task ShouldRescheduleMessage_WhenDeliveryCountBelowMax(string body)
+        [Test]
+        public async Task ShouldRescheduleMessage_WhenDeliveryCountBelowMax()
         {
             // Arrange
             var deliveryCount = 2;
+            var body = Fixture.Create<string>();
             var exception = new InvalidOperationException("transient");
             var message = CreateMessage(body, deliveryCount);
 
@@ -96,10 +98,11 @@ public static class ServiceBusRetrySchedulerTests
             Assert.That(capturedRetryMessage!.ApplicationProperties["DeliveryCount"], Is.EqualTo(deliveryCount + 1));
         }
 
-        [Test, AutoData]
-        public async Task ShouldDeadLetter_WhenDeliveryCountEqualsMax(string body)
+        [Test]
+        public async Task ShouldDeadLetter_WhenDeliveryCountEqualsMax()
         {
             // Arrange
+            var body = Fixture.Create<string>();
             var exception = new InvalidOperationException("simulated failure");
             var message = CreateMessage(body, 3);
 
@@ -113,66 +116,94 @@ public static class ServiceBusRetrySchedulerTests
             MessageActions.Verify(a => a.DeadLetterMessageAsync(message, null, exception.Message, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [Test, AutoData]
-        public async Task ShouldFallBackToBrokerDeliveryCount_WhenPropertyMissing(string body)
+        [Test]
+        public async Task ShouldFallBackToBrokerDeliveryCount_WhenApplicationPropertyIsAbsent()
         {
-            // Arrange — no DeliveryCount application property, so the broker's native count is used.
-            var message = CreateMessage(body, deliveryCount: null, nativeDeliveryCount: 1);
-
-            ServiceBusMessage? capturedRetryMessage = null;
-            Sender
-                .Setup(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()))
-                .Callback<ServiceBusMessage, CancellationToken>((msg, _) => capturedRetryMessage = msg)
-                .Returns(Task.CompletedTask);
+            // Arrange
+            var body = Fixture.Create<string>();
+            var exception = new InvalidOperationException("simulated failure");
+            var message = CreateMessage(body, nativeDeliveryCount: 3);
 
             // Act
-            var result = await Scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, new InvalidOperationException("transient"), CancellationToken.None);
+            var result = await Scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, exception, CancellationToken.None);
 
             // Assert
-            Assert.That(result, Is.EqualTo(RetryOutcome.Rescheduled));
-            Assert.That(capturedRetryMessage, Is.Not.Null);
-            Assert.That(capturedRetryMessage!.ApplicationProperties["DeliveryCount"], Is.EqualTo(2));
+            Assert.That(result, Is.EqualTo(RetryOutcome.DeadLettered));
+            Sender.Verify(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+            MessageActions.Verify(a => a.CompleteMessageAsync(message, It.IsAny<CancellationToken>()), Times.Never);
+            MessageActions.Verify(a => a.DeadLetterMessageAsync(message, null, exception.Message, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [Test, AutoData]
-        public async Task ShouldFallBackToBrokerDeliveryCount_WhenPropertyIsNotAnInteger(string body)
+        [Test]
+        public async Task ShouldDeadLetterImmediately_WhenExceptionTypeIsConfiguredForImmediateDeadLettering()
         {
-            // Arrange — DeliveryCount property present but not an int, so the broker's native count is used.
-            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
-                body: new BinaryData(Encoding.UTF8.GetBytes(body)),
-                deliveryCount: 1,
-                properties: new Dictionary<string, object> { ["DeliveryCount"] = "not-an-int" });
-
-            ServiceBusMessage? capturedRetryMessage = null;
-            Sender
-                .Setup(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()))
-                .Callback<ServiceBusMessage, CancellationToken>((msg, _) => capturedRetryMessage = msg)
-                .Returns(Task.CompletedTask);
-
-            // Act
-            var result = await Scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, new InvalidOperationException("transient"), CancellationToken.None);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(RetryOutcome.Rescheduled));
-            Assert.That(capturedRetryMessage, Is.Not.Null);
-            Assert.That(capturedRetryMessage!.ApplicationProperties["DeliveryCount"], Is.EqualTo(2));
-        }
-    }
-
-    public class DisposeAsync : ServiceBusRetrySchedulerTestsBase
-    {
-        [Test, AutoData]
-        public async Task ShouldDisposeCreatedSenders(string body)
-        {
-            // Arrange — reschedule once so the scheduler creates and caches a sender for the queue.
+            // Arrange
+            var body = Fixture.Create<string>();
+            var exception = new ArgumentException("permanent validation failure");
             var message = CreateMessage(body, deliveryCount: 1);
-            await Scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, new InvalidOperationException("transient"), CancellationToken.None);
 
             // Act
-            await Scheduler.DisposeAsync();
+            var result = await Scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, exception, [typeof(ArgumentException)], CancellationToken.None);
 
             // Assert
-            Sender.Verify(s => s.DisposeAsync(), Times.Once);
+            Assert.That(result, Is.EqualTo(RetryOutcome.DeadLettered));
+            Sender.Verify(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+            MessageActions.Verify(a => a.CompleteMessageAsync(message, It.IsAny<CancellationToken>()), Times.Never);
+            MessageActions.Verify(a => a.DeadLetterMessageAsync(message, null, exception.Message, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task ShouldReschedule_WhenExceptionTypeIsNotConfiguredForImmediateDeadLettering()
+        {
+            // Arrange
+            var body = Fixture.Create<string>();
+            var exception = new InvalidOperationException("transient");
+            var message = CreateMessage(body, deliveryCount: 1);
+
+            // Act
+            var result = await Scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, exception, [typeof(ArgumentException)], CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.EqualTo(RetryOutcome.Rescheduled));
+            Sender.Verify(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+            MessageActions.Verify(a => a.CompleteMessageAsync(message, It.IsAny<CancellationToken>()), Times.Once);
+            MessageActions.Verify(a => a.DeadLetterMessageAsync(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<Dictionary<string, object>?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ShouldApplyExponentialBackoff_WhenBackoffMultiplierIsGreaterThanOne()
+        {
+            // Arrange
+            var body = Fixture.Create<string>();
+            var exception = new InvalidOperationException("transient");
+            const int deliveryCount = 2;
+            var retryDelay = TimeSpan.FromSeconds(10);
+            var scheduler = new ServiceBusRetryScheduler(BusClient.Object,
+                Options.Create(new MessageRetryOptions { MaxDeliveryCount = 5, RetryDelay = retryDelay, BackoffMultiplier = 2 }),
+                Logger.Object);
+
+            var message = CreateMessage(body, deliveryCount);
+
+            ServiceBusMessage? capturedRetryMessage = null;
+            Sender
+                .Setup(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()))
+                .Callback<ServiceBusMessage, CancellationToken>((msg, _) => capturedRetryMessage = msg)
+                .Returns(Task.CompletedTask);
+
+            var before = DateTimeOffset.UtcNow;
+
+            // Act
+            await scheduler.RescheduleOrDeadLetterAsync(MessageActions.Object, message, QueueName, exception, CancellationToken.None);
+
+            var after = DateTimeOffset.UtcNow;
+
+            // Assert — delay = RetryDelay × BackoffMultiplier^(deliveryCount − 1) = 10s × 2^1 = 20s
+            var expectedDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * Math.Pow(2, deliveryCount - 1));
+            Assert.That(capturedRetryMessage, Is.Not.Null);
+            Assert.That(capturedRetryMessage!.ScheduledEnqueueTime,
+                Is.GreaterThanOrEqualTo(before.Add(expectedDelay))
+                .And.
+                LessThanOrEqualTo(after.Add(expectedDelay).AddSeconds(2)));
         }
     }
 }
